@@ -27,6 +27,8 @@ class AppContainer(context: Context) {
     val auth = AuthRepository(api, secure, prefs)
     val bots = BotRepository(context, secure)
     val botManager = BotManager(bots, appScope)
+    val vault = VaultRepository(api, secure, bots)
+    val crashLog = CrashLog(context)
 
     val apiConfigured: Boolean get() = BuildConfig.POCKETBOT_API_URL.startsWith("https://")
 }

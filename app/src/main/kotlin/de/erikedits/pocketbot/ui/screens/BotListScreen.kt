@@ -61,6 +61,7 @@ fun BotListScreen(
     val bots by container.bots.bots.collectAsStateWithLifecycle()
     val states by container.botManager.states.collectAsStateWithLifecycle()
     var unrestricted by remember { mutableStateOf(BatteryHelp.isUnrestricted(context)) }
+    var showRestore by remember { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { unrestricted = BatteryHelp.isUnrestricted(context) }
 
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -110,6 +111,9 @@ fun BotListScreen(
                         Text("🤖", style = MaterialTheme.typography.displayMedium)
                         Text(stringResource(R.string.bots_empty_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                         Text(stringResource(R.string.bots_empty_text), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (container.cloudAvailable()) {
+                            TextButton(onClick = { showRestore = true }) { Text(stringResource(R.string.vault_restore_title)) }
+                        }
                     }
                 }
             }
@@ -120,7 +124,7 @@ fun BotListScreen(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                 ) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        InitialAvatar(bot.name)
+                        Avatar(bot.name, bot.avatarUrl)
                         Column(Modifier.weight(1f)) {
                             Text(bot.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                             StatusLine(state?.status ?: BotStatus.STOPPED)
@@ -137,4 +141,5 @@ fun BotListScreen(
             }
         }
     }
+    if (showRestore) RestoreDialog(container) { showRestore = false }
 }

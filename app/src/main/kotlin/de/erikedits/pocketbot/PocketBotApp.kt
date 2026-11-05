@@ -11,6 +11,7 @@ class PocketBotApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        container.crashLog.install()
         Notifications.ensureChannels(this)
     }
 }

@@ -66,6 +66,7 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
     val bots by container.bots.bots.collectAsStateWithLifecycle()
     val bot = bots.firstOrNull { it.id == botId }
     val states by container.botManager.states.collectAsStateWithLifecycle()
+    val problems by container.botManager.problems.collectAsStateWithLifecycle()
     val state = states[botId] ?: EngineState()
     val engine = container.botManager.engine(botId)
     val emptyLogs = remember { MutableStateFlow(emptyList<de.erikedits.pocketbot.engine.LogEntry>()) }
@@ -101,7 +102,7 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
             item {
                 SectionCard {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        InitialAvatar(bot.name, 56.dp)
+                        Avatar(bot.name, bot.avatarUrl, 56.dp)
                         Column(Modifier.weight(1f)) {
                             Text(bot.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                             StatusLine(state.status)
@@ -120,6 +121,9 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = PbColors.Green),
                         ) { Text(stringResource(R.string.dashboard_start)) }
+                    }
+                    if (problems[botId] == "no_token") {
+                        Text(stringResource(R.string.dashboard_no_token), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                     }
                     when (state.status) {
                         BotStatus.INVALID_TOKEN -> Text(stringResource(R.string.dashboard_invalid_token_help), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -148,6 +152,7 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
                     }
                 }
             }
+            item { CloudCard(container, bot) }
             item {
                 SectionCard(title = stringResource(R.string.dashboard_invite)) {
                     val link = InviteLink.build(bot.id)
@@ -159,7 +164,22 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
                 }
             }
             item {
-                Text(stringResource(R.string.dashboard_logs), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.dashboard_logs), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    if (logs.isNotEmpty()) {
+                        TextButton(onClick = {
+                            val text = buildString {
+                                append("PocketBot ${de.erikedits.pocketbot.BuildConfig.VERSION_NAME} (${de.erikedits.pocketbot.BuildConfig.VERSION_CODE}) · ")
+                                append("${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})\n")
+                                append("Status: ${state.status} ${state.error ?: ""}\n\n")
+                                val fmt = DateFormat.getTimeInstance(DateFormat.MEDIUM)
+                                logs.takeLast(300).forEach { append(fmt.format(Date(it.time))).append(' ').append(it.level).append(' ').append(it.message).append('\n') }
+                            }
+                            val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+                            context.startActivity(Intent.createChooser(send, null))
+                        }) { Text(stringResource(R.string.dashboard_share_log)) }
+                    }
+                }
                 if (logs.isEmpty()) Text(stringResource(R.string.dashboard_logs_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             items(logs.takeLast(300).asReversed()) { entry ->

@@ -36,11 +36,21 @@ class BotManager(
     private val _events = MutableSharedFlow<BotEvent>(extraBufferCapacity = 32)
     val events: SharedFlow<BotEvent> = _events.asSharedFlow()
 
+    private val _problems = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    /** Why a bot could not even be started (e.g. "no_token"); shown on the dashboard. */
+    val problems: StateFlow<Map<String, String>> = _problems.asStateFlow()
+
     fun engine(id: String): BotEngine? = entries[id]?.engine
 
     /** Starts the bot; false when no token is stored. */
     fun start(id: String): Boolean {
-        val token = repo.token(id) ?: return false
+        val token = repo.token(id)
+        if (token == null) {
+            _problems.update { it + (id to "no_token") }
+            return false
+        }
+        _problems.update { it - id }
         val entry = entries[id]?.takeIf { it.token == token } ?: run {
             remove(id)
             create(id, token)

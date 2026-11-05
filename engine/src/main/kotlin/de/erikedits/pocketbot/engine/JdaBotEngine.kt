@@ -53,6 +53,7 @@ class JdaBotEngine(
     private val lock = Any()
     private var jda: JDA? = null
     private var pingTask: ScheduledFuture<*>? = null
+    private var connectWatch: ScheduledFuture<*>? = null
 
     /** Set while we shut JDA down on purpose, so the ShutdownEvent is not reported as a crash. */
     @Volatile private var stopping = false
@@ -63,8 +64,17 @@ class JdaBotEngine(
             stopping = false
             _state.update { it.copy(status = BotStatus.CONNECTING, error = null) }
         }
-        logBuffer.info("Connecting to Discord …")
+        EngineLogSink.register(logBuffer)
+        logBuffer.info("Connecting to Discord … (Android ${System.getProperty("java.vm.version") ?: "?"})")
         worker.execute { connect() }
+        synchronized(lock) {
+            connectWatch?.cancel(false)
+            connectWatch = worker.schedule({
+                if (_state.value.status == BotStatus.CONNECTING) {
+                    logBuffer.warn("Still connecting after 60 s. Check the internet connection and the log lines above.")
+                }
+            }, 60, TimeUnit.SECONDS)
+        }
     }
 
     private fun connect() {
@@ -84,9 +94,11 @@ class JdaBotEngine(
             logBuffer.error("The token is invalid. Was it reset in the Developer Portal?")
             _state.update { EngineState(status = BotStatus.INVALID_TOKEN, error = "invalid_token") }
             _events.tryEmit(EngineEvent.InvalidToken)
-        } catch (e: Exception) {
-            logBuffer.error("Start failed: ${e.message ?: e.javaClass.simpleName}")
-            _state.update { EngineState(status = BotStatus.ERROR, error = e.message) }
+        } catch (e: Throwable) {
+            // Throwable on purpose: an Error (e.g. NoClassDefFoundError) would otherwise be swallowed
+            // by the executor and leave the bot stuck in CONNECTING without any log line.
+            logBuffer.error("Start failed:\n${e.shortTrace()}")
+            _state.update { EngineState(status = BotStatus.ERROR, error = e.message ?: e.javaClass.simpleName) }
             _events.tryEmit(EngineEvent.Crashed(e.message ?: e.javaClass.simpleName))
         }
     }
@@ -99,12 +111,17 @@ class JdaBotEngine(
             jda = null
             pingTask?.cancel(false)
             pingTask = null
+            connectWatch?.cancel(false)
+            connectWatch = null
             _state.value = EngineState(status = if (pause) BotStatus.PAUSED else BotStatus.STOPPED)
         }
+        EngineLogSink.unregister(logBuffer)
         logBuffer.info(if (pause) "Paused." else "Stopped.")
         if (instance != null) worker.execute {
-            instance.shutdown()
-            if (!instance.awaitShutdown(5, TimeUnit.SECONDS)) instance.shutdownNow()
+            runCatching {
+                instance.shutdown()
+                if (!instance.awaitShutdown(5, TimeUnit.SECONDS)) instance.shutdownNow()
+            }.onFailure { logBuffer.warn("Shutdown: ${it.message}") }
         }
     }
 

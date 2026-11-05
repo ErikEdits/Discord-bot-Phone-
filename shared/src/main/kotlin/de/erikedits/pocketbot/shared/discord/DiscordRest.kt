@@ -70,8 +70,8 @@ class DiscordRest(
                 val index = ((userId.toLongOrNull() ?: 0L) shr 22) % 6
                 "https://cdn.discordapp.com/embed/avatars/$index.png"
             } else {
-                val ext = if (hash.startsWith("a_")) "gif" else "png"
-                "https://cdn.discordapp.com/avatars/$userId/$hash.$ext?size=128"
+                // png also works for animated avatars (first frame); no GIF decoder needed in the app
+                "https://cdn.discordapp.com/avatars/$userId/$hash.png?size=128"
             }
     }
 }

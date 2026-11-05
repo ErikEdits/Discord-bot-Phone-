@@ -77,6 +77,10 @@ android {
                 "META-INF/versions/9/OSGI-INF/MANIFEST.MF",
                 "META-INF/versions/9/module-info.class",
                 "module-info.class",
+                // BouncyCastle ships a signed jar
+                "META-INF/*.SF",
+                "META-INF/*.DSA",
+                "META-INF/*.RSA",
             )
         }
     }
@@ -110,6 +114,8 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.compose.material.icons)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     debugImplementation(libs.compose.ui.tooling)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)

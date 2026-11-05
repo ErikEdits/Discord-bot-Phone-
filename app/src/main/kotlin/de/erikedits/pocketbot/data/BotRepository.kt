@@ -20,7 +20,15 @@ data class StoredBot(
     val createdAt: Long = System.currentTimeMillis(),
     /** Was running when the app/phone last stopped -> restart after reboot. */
     val shouldRun: Boolean = false,
-)
+    /** Cloud vault state: none, synced or failed. */
+    val cloud: String = CLOUD_NONE,
+) {
+    companion object {
+        const val CLOUD_NONE = "none"
+        const val CLOUD_SYNCED = "synced"
+        const val CLOUD_FAILED = "failed"
+    }
+}
 
 /** Bot list in files/bots.json; tokens separately in [SecureStore]. Phase 4 moves this to Room. */
 class BotRepository(context: Context, private val secure: SecureStore) {
@@ -44,6 +52,12 @@ class BotRepository(context: Context, private val secure: SecureStore) {
     fun setShouldRun(id: String, run: Boolean) {
         val bot = get(id) ?: return
         if (bot.shouldRun != run) save(_bots.value.map { if (it.id == id) it.copy(shouldRun = run) else it })
+    }
+
+    @Synchronized
+    fun setCloud(id: String, state: String) {
+        if (get(id) == null) return
+        save(_bots.value.map { if (it.id == id) it.copy(cloud = state) else it })
     }
 
     @Synchronized

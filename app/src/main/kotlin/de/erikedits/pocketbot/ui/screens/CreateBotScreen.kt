@@ -83,6 +83,8 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
     var token by rememberSaveable { mutableStateOf("") }
     var identity by remember { mutableStateOf<BotIdentity?>(null) }
     var multiServer by rememberSaveable { mutableStateOf(false) }
+    var useCloud by rememberSaveable { mutableStateOf(false) }
+    var newPin by remember { mutableStateOf<String?>(null) }
     val categories = remember { mutableStateListOf<String>() }
 
     fun back() {
@@ -123,7 +125,14 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
                         onChecked = { identity = it },
                         onNext = { step = Step.STORAGE },
                     )
-                    Step.STORAGE -> StorageStep(onNext = { step = Step.PURPOSE })
+                    Step.STORAGE -> StorageStep(
+                        container = container,
+                        useCloud = useCloud,
+                        onUseCloud = { useCloud = it },
+                        onValidPin = { newPin = it },
+                        canContinue = !useCloud || container.vault.hasPin() || newPin != null,
+                        onNext = { step = Step.PURPOSE },
+                    )
                     Step.PURPOSE -> PurposeStep(
                         identity = identity,
                         multiServer = multiServer,
@@ -151,6 +160,10 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
                                 )
                                 container.botManager.remove(bot.applicationId) // token may have changed
                                 BotRuntimeService.startBot(context, bot.applicationId)
+                                if (useCloud) {
+                                    newPin?.let { container.vault.setPin(it) }
+                                    container.appScope.launch { container.vault.upload(bot.applicationId) }
+                                }
                                 onDone(bot.applicationId)
                             }
                         }
@@ -235,7 +248,7 @@ private fun TokenStep(
     if (identity != null) {
         SectionCard(title = stringResource(R.string.token_valid_title)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                InitialAvatar(identity.username)
+                Avatar(identity.username, identity.avatarUrl)
                 Column {
                     Text(identity.username, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(stringResource(R.string.token_valid_servers, identity.guildCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -276,14 +289,22 @@ private fun IntentRow(label: String, on: Boolean) {
 }
 
 @Composable
-private fun StorageStep(onNext: () -> Unit) {
+private fun StorageStep(
+    container: AppContainer,
+    useCloud: Boolean,
+    onUseCloud: (Boolean) -> Unit,
+    onValidPin: (String?) -> Unit,
+    canContinue: Boolean,
+    onNext: () -> Unit,
+) {
+    val cloudPossible = container.cloudAvailable()
     Text(stringResource(R.string.storage_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
     SectionCard {
         Row(
-            Modifier.fillMaxWidth().selectable(selected = true, onClick = {}, role = Role.RadioButton),
+            Modifier.fillMaxWidth().selectable(selected = !useCloud, onClick = { onUseCloud(false) }, role = Role.RadioButton),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RadioButton(selected = true, onClick = null)
+            RadioButton(selected = !useCloud, onClick = null)
             Column(Modifier.padding(start = 8.dp)) {
                 Text(stringResource(R.string.storage_local), fontWeight = FontWeight.SemiBold)
                 Text(stringResource(R.string.storage_local_text), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -291,15 +312,29 @@ private fun StorageStep(onNext: () -> Unit) {
         }
     }
     SectionCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(selected = false, onClick = null, enabled = false)
+        Row(
+            Modifier.fillMaxWidth().selectable(selected = useCloud, enabled = cloudPossible, onClick = { onUseCloud(true) }, role = Role.RadioButton),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(selected = useCloud, onClick = null, enabled = cloudPossible)
             Column(Modifier.padding(start = 8.dp)) {
-                Text(stringResource(R.string.storage_cloud), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(stringResource(R.string.storage_cloud_soon), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.storage_cloud), fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(if (cloudPossible) R.string.storage_cloud_text else R.string.vault_needs_login),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (useCloud) {
+            if (container.vault.hasPin()) {
+                Text(stringResource(R.string.vault_pin_already_set), style = MaterialTheme.typography.bodySmall, color = PbColors.Green)
+            } else {
+                PinSetupFields(onValidPin)
             }
         }
     }
-    Button(onClick = onNext, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.next)) }
+    Button(onClick = onNext, enabled = canContinue, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.next)) }
 }
 
 @OptIn(ExperimentalLayoutApi::class)

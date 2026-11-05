@@ -18,6 +18,8 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.serialization.json)
     api(libs.okhttp)
+    // Argon2id for the end-to-end encrypted cloud vault (SPEC 6.2)
+    implementation(libs.bouncycastle)
 
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)

@@ -60,6 +60,8 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
     var low by remember { mutableFloatStateOf(prefs.batteryLow.toFloat()) }
     var resume by remember { mutableFloatStateOf(prefs.batteryResume.toFloat()) }
     var unrestricted by remember { mutableStateOf(BatteryHelp.isUnrestricted(context)) }
+    var showRestore by remember { mutableStateOf(false) }
+    var crash by remember { mutableStateOf(container.crashLog.read()) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { unrestricted = BatteryHelp.isUnrestricted(context) }
 
     Scaffold(
@@ -78,7 +80,7 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
                 val user = (auth as? AuthState.LoggedIn)?.user
                 if (user != null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        InitialAvatar(user.displayName)
+                        Avatar(user.displayName, user.avatarUrl, 56.dp)
                         Column {
                             Text(user.displayName, fontWeight = FontWeight.SemiBold)
                             Text("@${user.username}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -86,6 +88,28 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
                     }
                 }
                 OutlinedButton(onClick = { scope.launch { container.auth.logout() } }) { Text(stringResource(R.string.settings_logout)) }
+            }
+
+            SectionCard(title = stringResource(R.string.vault_card_title)) {
+                Text(stringResource(R.string.vault_settings_text), style = MaterialTheme.typography.bodySmall)
+                if (container.cloudAvailable()) {
+                    TextButton(onClick = { showRestore = true }) { Text(stringResource(R.string.vault_restore_title)) }
+                } else {
+                    Text(stringResource(R.string.vault_needs_login), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            crash?.let { report ->
+                SectionCard(title = stringResource(R.string.crash_title)) {
+                    Text(report.lines().take(8).joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = PbColors.Red)
+                    Row {
+                        TextButton(onClick = {
+                            val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, report)
+                            context.startActivity(Intent.createChooser(send, null))
+                        }) { Text(stringResource(R.string.share)) }
+                        TextButton(onClick = { container.crashLog.clear(); crash = null }) { Text(stringResource(R.string.dashboard_delete)) }
+                    }
+                }
             }
 
             SectionCard(title = stringResource(R.string.settings_battery)) {
@@ -146,4 +170,5 @@ fun SettingsScreen(container: AppContainer, onBack: () -> Unit) {
             Column(Modifier.fillMaxWidth()) {}
         }
     }
+    if (showRestore) RestoreDialog(container) { showRestore = false }
 }

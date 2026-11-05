@@ -19,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -76,7 +78,23 @@ fun statusLabel(status: BotStatus): Int = when (status) {
     BotStatus.ERROR -> R.string.status_error
 }
 
-/** Round avatar with the first letter (no image loader in the skeleton yet). */
+/** Discord avatar loaded with Coil; the letter avatar shows while loading or when there is none. */
+@Composable
+fun Avatar(name: String, url: String?, size: Dp = 44.dp) {
+    Box(Modifier.size(size).clip(CircleShape)) {
+        InitialAvatar(name, size)
+        if (!url.isNullOrBlank()) {
+            AsyncImage(
+                model = url,
+                contentDescription = null,
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
+    }
+}
+
+/** Round avatar with the first letter. */
 @Composable
 fun InitialAvatar(name: String, size: Dp = 44.dp) {
     Box(
