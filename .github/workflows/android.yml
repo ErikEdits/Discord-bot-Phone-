@@ -53,6 +53,12 @@ jobs:
           POCKETBOT_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew --no-daemon :app:assembleDebug
 
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PocketBot-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+
       - name: Lint
         run: ./gradlew --no-daemon :app:lintDebug
 
@@ -63,12 +69,6 @@ jobs:
           name: lint-report
           path: app/build/reports/lint-results-debug.html
           if-no-files-found: ignore
-
-      - name: Upload debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: PocketBot-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
 
       - name: Build release APK
         if: startsWith(github.ref, 'refs/tags/v')

@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -345,7 +346,7 @@ private fun PurposeStep(
 @Composable
 private fun HosterRecommendation() {
     val context = LocalContext.current
-    val language = context.resources.configuration.locales[0].language
+    val language = LocalConfiguration.current.locales[0].language
     SectionCard(title = stringResource(R.string.hoster_title)) {
         Text(stringResource(R.string.hoster_text), style = MaterialTheme.typography.bodySmall)
         DefaultHosters.list.forEach { hoster: Hoster ->
