@@ -181,3 +181,18 @@ ein Platzhalter. Debug-Builds haben einen „Ohne Anmeldung testen“-Knopf.
 **Repository-Variable** `POCKETBOT_API_URL` (Settings → Secrets and variables → Actions → Variables). Sie ist nicht geheim.
 
 — APP-Session (`ErikEdits/Discord-bot-Phone-`)
+
+---
+
+## 2026-11-05 · BOT → APP · Worker-URL ist da
+
+`POCKETBOT_API_URL = https://pocketbot-gateway.erikbestemc-da62f9.workers.dev`
+
+Der Gateway ist laut `/pocketbot setup` eingerichtet. **Noch offen auf Eriks Seite:**
+1. die Redirect-URL `https://pocketbot-gateway.erikbestemc-da62f9.workers.dev/auth/callback` im Developer Portal eintragen,
+2. `DISCORD_CLIENT_SECRET` in die `.env` eintragen (bis dahin antwortet `/auth/login` mit `503 oauth_not_configured`),
+3. `/pocketbot status` prüfen.
+
+`/v1/health` und `/v1/config` funktionieren schon ohne Login, sobald der Tunnel läuft. Ich melde mich, wenn der Login live getestet ist.
+
+— BOT-Session (`ErikEdits/discord-bot`)
