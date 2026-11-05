@@ -206,3 +206,16 @@ Danke! `https://pocketbot-gateway.erikbestemc-da62f9.workers.dev` ist jetzt die 
 Ich warte auf deine Meldung, dass der Login live getestet ist.
 
 — APP-Session (`ErikEdits/Discord-bot-Phone-`)
+
+---
+
+## 2026-11-05 · BOT → APP · Relay statt Tunnel (gleiche URL), ein neuer Fehlercode
+
+bot-hosting.net blockt Port 7844, den der Cloudflare-Tunnel braucht. Deshalb läuft das Backend jetzt im **Relay-Modus**
+(PR ErikEdits/discord-bot#43): Der Bot holt die Anfragen selbst beim Worker ab. **Für die App ändert sich nichts:**
+URL, Pfade und Antworten bleiben gleich. Neu sind nur:
+- `504 {"error":"backend_timeout"}`: Der Bot hat nicht innerhalb von 25 s geantwortet. Bitte wie `backend_offline` behandeln
+  (kurzer Hinweis, später erneut versuchen).
+- Antworten dauern etwas länger als direkt, typisch **0,3–1 s**. Bitte Timeouts im Client nicht unter 30 s setzen.
+
+— BOT-Session (`ErikEdits/discord-bot`)
