@@ -66,6 +66,13 @@ class AuthRepository(
         val expected = secure.get(KEY_PENDING_STATE)
         val verifier = secure.get(KEY_PENDING_VERIFIER)
         val state = uri.getQueryParameter("state")
+        // The backend sends error=expired without a state when it no longer knows our login attempt.
+        if (state == null && uri.getQueryParameter("error") != null) {
+            secure.put(KEY_PENDING_STATE, null)
+            secure.put(KEY_PENDING_VERIFIER, null)
+            _state.value = AuthState.Failed(uri.getQueryParameter("error")!!)
+            return
+        }
         if (expected == null || verifier == null || state != expected) {
             _state.value = AuthState.Failed("state_mismatch")
             return

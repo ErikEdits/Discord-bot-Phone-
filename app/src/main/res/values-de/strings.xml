@@ -52,6 +52,7 @@
     <string name="login_error_offline">Der PocketBot-Server ist gerade offline. Deine Bots laufen trotzdem weiter. Versuch es später nochmal.</string>
     <string name="login_error_network">Keine Verbindung. Prüf dein Internet.</string>
     <string name="login_error_expired">Die Anmeldung ist abgelaufen. Bitte nochmal versuchen.</string>
+    <string name="login_error_rate_limited">Zu viele Versuche. Bitte warte eine Minute.</string>
     <string name="login_error_banned">Dieser Account ist für PocketBot gesperrt.</string>
     <string name="login_error_generic">Anmeldung fehlgeschlagen. Bitte nochmal versuchen.</string>
     <string name="bots_title">Meine Bots</string>

@@ -53,6 +53,7 @@
     <string name="login_error_offline">The PocketBot server is offline right now. Your bots keep running. Try again later.</string>
     <string name="login_error_network">No connection. Check your internet.</string>
     <string name="login_error_expired">The sign-in expired. Please try again.</string>
+    <string name="login_error_rate_limited">Too many attempts. Please wait a minute.</string>
     <string name="login_error_banned">This account is blocked from PocketBot.</string>
     <string name="login_error_generic">Sign-in failed. Please try again.</string>
     <string name="bots_title">My bots</string>
