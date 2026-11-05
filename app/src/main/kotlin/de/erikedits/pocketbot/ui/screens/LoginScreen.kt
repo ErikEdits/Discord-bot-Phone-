@@ -77,7 +77,7 @@ fun LoginScreen(container: AppContainer, state: AuthState) {
 
 private fun loginErrorText(code: String): Int = when (code) {
     "access_denied" -> R.string.login_error_denied
-    "backend_offline", "maintenance", "oauth_not_configured", "internal_error" -> R.string.login_error_offline
+    "backend_offline", "backend_timeout", "maintenance", "oauth_not_configured", "internal_error" -> R.string.login_error_offline
     "network" -> R.string.login_error_network
     "expired", "invalid_code", "invalid_verifier", "state_mismatch" -> R.string.login_error_expired
     "rate_limited" -> R.string.login_error_rate_limited

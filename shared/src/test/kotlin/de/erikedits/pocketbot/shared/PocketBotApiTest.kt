@@ -73,6 +73,18 @@ class PocketBotApiTest {
     }
 
     @Test
+    fun `relay timeout counts as offline`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(504).setBody("""{"error":"backend_timeout","message":"slow"}"""))
+        try {
+            api().health()
+            fail("expected ApiException")
+        } catch (e: ApiException) {
+            assertTrue(e.isBackendOffline)
+            assertEquals("backend_timeout", e.code)
+        }
+    }
+
+    @Test
     fun `config falls back to defaults for missing fields`() = runTest {
         server.enqueue(MockResponse().setBody("""{"min_app_version":2,"unknown":1}"""))
         val cfg = api().config()

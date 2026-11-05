@@ -17,7 +17,7 @@ class AppContainer(context: Context) {
 
     val http: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
+        .readTimeout(35, TimeUnit.SECONDS) // relay mode: backend may take up to 25 s (504 backend_timeout)
         .build()
 
     val prefs = Prefs(context)

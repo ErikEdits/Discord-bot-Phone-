@@ -14,7 +14,7 @@ import java.io.IOException
 /** Thrown for every non-2xx answer of the App-API. [code] is the `error` field of the contract. */
 class ApiException(val status: Int, val code: String, override val message: String) : Exception(message) {
     val isUnauthorized: Boolean get() = status == 401
-    val isBackendOffline: Boolean get() = status == 503
+    val isBackendOffline: Boolean get() = status == 503 || status == 504 || code == "backend_timeout"
 }
 
 /**
