@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phone with a little robot face. 108dp canvas, content inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M42,30h24a5,5 0,0 1,5 5v38a5,5 0,0 1,-5 5h-24a5,5 0,0 1,-5 -5v-38a5,5 0,0 1,5 -5z" />
+    <path
+        android:fillColor="#FF5865F2"
+        android:pathData="M44,38h20a2,2 0,0 1,2 2v22a2,2 0,0 1,-2 2h-20a2,2 0,0 1,-2 -2v-22a2,2 0,0 1,2 -2z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M49,47m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0M59,47m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M48,55h12a1.5,1.5 0,0 1,0 3h-12a1.5,1.5 0,0 1,0 -3z" />
+    <path
+        android:fillColor="#FF5865F2"
+        android:pathData="M51,69h6a1.5,1.5 0,0 1,0 3h-6a1.5,1.5 0,0 1,0 -3z" />
+</vector>
