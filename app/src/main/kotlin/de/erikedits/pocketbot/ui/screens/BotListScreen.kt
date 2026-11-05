@@ -62,6 +62,7 @@ fun BotListScreen(
     val states by container.botManager.states.collectAsStateWithLifecycle()
     var unrestricted by remember { mutableStateOf(BatteryHelp.isUnrestricted(context)) }
     var showRestore by remember { mutableStateOf(false) }
+    var crash by remember { mutableStateOf(container.crashLog.read()) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { unrestricted = BatteryHelp.isUnrestricted(context) }
 
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -96,6 +97,21 @@ fun BotListScreen(
             contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            crash?.let { report ->
+                item {
+                    SectionCard(title = stringResource(R.string.crash_banner_title)) {
+                        Text(stringResource(R.string.crash_banner_text), style = MaterialTheme.typography.bodySmall)
+                        Text(report.lines().filter { it.isNotBlank() }.take(6).joinToString("\n"), style = MaterialTheme.typography.bodySmall, color = PbColors.Red)
+                        Row {
+                            TextButton(onClick = {
+                                val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, report)
+                                context.startActivity(android.content.Intent.createChooser(send, null))
+                            }) { Text(stringResource(R.string.share)) }
+                            TextButton(onClick = { container.crashLog.clear(); crash = null }) { Text(stringResource(R.string.dashboard_delete)) }
+                        }
+                    }
+                }
+            }
             val anyActive = states.values.any { it.status.isActive }
             if (!unrestricted && (anyActive || bots.isNotEmpty())) {
                 item {

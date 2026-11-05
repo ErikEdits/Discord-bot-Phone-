@@ -136,6 +136,10 @@
     <string name="token_dialog_wrong_bot">Dieser Token gehört zu einem anderen Bot, nicht zu %1$s.</string>
     <string name="token_dialog_save_failed">Speichern des Tokens auf diesem Handy fehlgeschlagen:</string>
     <string name="dashboard_share_log">Log teilen</string>
+    <string name="crash_banner_title">⚠️ PocketBot ist abgestürzt</string>
+    <string name="crash_banner_text">Bitte teile diesen Bericht mit dem Entwickler, damit der Fehler behoben werden kann.</string>
+    <string name="alert_safe_mode_title">Bots nicht neu gestartet</string>
+    <string name="alert_safe_mode_text">PocketBot ist gerade abgestürzt, deshalb wurden deine Bots nicht automatisch gestartet. Öffne die App, um den Absturzbericht zu sehen.</string>
     <string name="crash_title">Letzter Absturz</string>
     <string name="purpose_title">Wofür ist der Bot?</string>
     <string name="purpose_own_server">Für meinen eigenen Server</string>

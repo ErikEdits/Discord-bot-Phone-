@@ -137,6 +137,10 @@
     <string name="token_dialog_wrong_bot">This token belongs to a different bot, not %1$s.</string>
     <string name="token_dialog_save_failed">Saving the token on this phone failed:</string>
     <string name="dashboard_share_log">Share log</string>
+    <string name="crash_banner_title">⚠️ PocketBot crashed</string>
+    <string name="crash_banner_text">Please share this report with the developer so the bug can be fixed.</string>
+    <string name="alert_safe_mode_title">Bots not restarted</string>
+    <string name="alert_safe_mode_text">PocketBot crashed a moment ago, so your bots were not started automatically. Open the app to see the crash report.</string>
     <string name="crash_title">Last crash</string>
     <string name="purpose_title">What is the bot for?</string>
     <string name="purpose_own_server">For my own server</string>

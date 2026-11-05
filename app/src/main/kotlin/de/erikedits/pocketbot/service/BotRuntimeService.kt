@@ -60,7 +60,13 @@ class BotRuntimeService : LifecycleService() {
             ACTION_START -> intent.getStringExtra(EXTRA_BOT_ID)?.let { manager.start(it) }
             ACTION_STOP_ALL -> manager.stopAll()
             // null intent = system restarted us after killing the process (START_STICKY)
-            ACTION_RESTORE, null -> container.bots.bots.value.filter { it.shouldRun }.forEach { manager.start(it.id) }
+            ACTION_RESTORE, null -> if (container.crashLog.crashedRecently()) {
+                // Safe mode: the app crashed a moment ago; restarting the bots could crash it again.
+                manager.clearAutoStart()
+                Notifications.alert(this, getString(R.string.alert_safe_mode_title), getString(R.string.alert_safe_mode_text))
+            } else {
+                container.bots.bots.value.filter { it.shouldRun }.forEach { manager.start(it.id) }
+            }
         }
         if (!manager.hasWork()) shutdown()
         return START_STICKY

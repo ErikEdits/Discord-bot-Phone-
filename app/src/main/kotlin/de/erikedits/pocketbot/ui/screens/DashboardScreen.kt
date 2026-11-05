@@ -69,7 +69,7 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
     val problems by container.botManager.problems.collectAsStateWithLifecycle()
     val state = states[botId] ?: EngineState()
     val engine = container.botManager.engine(botId)
-    val emptyLogs = remember { MutableStateFlow(emptyList<de.erikedits.pocketbot.engine.LogEntry>()) }
+    val emptyLogs = remember { MutableStateFlow(container.botManager.savedLog(botId)) }
     val logs by (engine?.logs ?: emptyLogs).collectAsStateWithLifecycle()
     var confirmDelete by remember { mutableStateOf(false) }
     var showTokenDialog by remember { mutableStateOf(false) }

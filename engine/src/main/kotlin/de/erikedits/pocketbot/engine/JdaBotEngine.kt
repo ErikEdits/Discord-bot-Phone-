@@ -38,12 +38,14 @@ class JdaBotEngine(
     private val token: String,
     private val intents: Set<GatewayIntent> = EnumSet.of(GatewayIntent.GUILD_MESSAGES),
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Optional file that keeps the log across app crashes. */
+    logFile: java.io.File? = null,
 ) : BotEngine {
 
     private val _state = MutableStateFlow(EngineState())
     override val state: StateFlow<EngineState> = _state.asStateFlow()
 
-    private val logBuffer = LogBuffer(clock = clock)
+    private val logBuffer = LogBuffer(clock = clock, file = logFile)
     override val logs: StateFlow<List<LogEntry>> = logBuffer.entries
 
     private val _events = MutableSharedFlow<EngineEvent>(extraBufferCapacity = 16)

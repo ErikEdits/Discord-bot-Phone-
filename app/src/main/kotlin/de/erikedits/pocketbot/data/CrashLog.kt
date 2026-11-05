@@ -13,10 +13,16 @@ import java.util.Locale
 /** Saves the last app crash to a file so it can be shown and shared from the settings. */
 class CrashLog(context: Context) {
     private val file = File(context.filesDir, "last_crash.txt")
+    private val prefs = context.getSharedPreferences("crash", Context.MODE_PRIVATE)
+
+    /** True if the app crashed within [withinMs] — used to skip auto-starting bots (safe mode). */
+    fun crashedRecently(withinMs: Long = 10 * 60_000L): Boolean =
+        System.currentTimeMillis() - prefs.getLong("time", 0) < withinMs
 
     fun install() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            runCatching { prefs.edit().putLong("time", System.currentTimeMillis()).commit() }
             runCatching {
                 val trace = StringWriter().also { error.printStackTrace(PrintWriter(it)) }.toString()
                 file.writeText(

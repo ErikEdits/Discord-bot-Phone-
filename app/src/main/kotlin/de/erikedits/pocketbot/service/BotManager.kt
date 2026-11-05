@@ -6,6 +6,8 @@ import de.erikedits.pocketbot.engine.BotStatus
 import de.erikedits.pocketbot.engine.EngineEvent
 import de.erikedits.pocketbot.engine.EngineState
 import de.erikedits.pocketbot.engine.JdaBotEngine
+import de.erikedits.pocketbot.engine.LogEntry
+import de.erikedits.pocketbot.engine.LogFile
 import de.erikedits.pocketbot.engine.isActive
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 data class BotEvent(val botId: String, val event: EngineEvent)
@@ -25,7 +28,9 @@ data class BotEvent(val botId: String, val event: EngineEvent)
 class BotManager(
     private val repo: BotRepository,
     private val scope: CoroutineScope,
-    private val engineFactory: (token: String) -> BotEngine = { JdaBotEngine(it) },
+    /** Folder for per-bot log files that survive crashes (null = memory only). */
+    private val logDir: File? = null,
+    private val engineFactory: (id: String, token: String, logFile: File?) -> BotEngine = { _, token, file -> JdaBotEngine(token, logFile = file) },
 ) {
     private class Entry(val engine: BotEngine, val token: String, val jobs: List<Job>)
 
@@ -42,6 +47,12 @@ class BotManager(
     val problems: StateFlow<Map<String, String>> = _problems.asStateFlow()
 
     fun engine(id: String): BotEngine? = entries[id]?.engine
+
+    /** Log of the last run from disk, e.g. after the app crashed. */
+    fun savedLog(id: String): List<LogEntry> = logDir?.let { LogFile.read(File(it, "$id.log")) } ?: emptyList()
+
+    /** Safe mode after a crash: don't auto-restart anything. */
+    fun clearAutoStart() = repo.bots.value.forEach { repo.setShouldRun(it.id, false) }
 
     /** Starts the bot; false when no token is stored. */
     fun start(id: String): Boolean {
@@ -87,7 +98,7 @@ class BotManager(
     fun activeCount(): Int = entries.values.count { it.engine.state.value.status.isActive }
 
     private fun create(id: String, token: String): Entry {
-        val engine = engineFactory(token)
+        val engine = engineFactory(id, token, logDir?.let { File(it, "$id.log") })
         val jobs = listOf(
             scope.launch { engine.state.collect { s -> _states.update { it + (id to s) } } },
             scope.launch {
