@@ -72,6 +72,7 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
     val emptyLogs = remember { MutableStateFlow(emptyList<de.erikedits.pocketbot.engine.LogEntry>()) }
     val logs by (engine?.logs ?: emptyLogs).collectAsStateWithLifecycle()
     var confirmDelete by remember { mutableStateOf(false) }
+    var showTokenDialog by remember { mutableStateOf(false) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -122,8 +123,21 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
                             colors = ButtonDefaults.buttonColors(containerColor = PbColors.Green),
                         ) { Text(stringResource(R.string.dashboard_start)) }
                     }
-                    if (problems[botId] == "no_token") {
-                        Text(stringResource(R.string.dashboard_no_token), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    val problem = problems[botId]
+                    if (problem != null) {
+                        Text(
+                            stringResource(if (problem == "no_token") R.string.dashboard_no_token else R.string.dashboard_token_unreadable),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        if (problem != "no_token") {
+                            Text(problem, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    if (problem != null || state.status == BotStatus.INVALID_TOKEN) {
+                        OutlinedButton(onClick = { showTokenDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(stringResource(R.string.token_dialog_title))
+                        }
                     }
                     when (state.status) {
                         BotStatus.INVALID_TOKEN -> Text(stringResource(R.string.dashboard_invalid_token_help), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -197,6 +211,8 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
             }
         }
     }
+
+    if (showTokenDialog) TokenDialog(container, bot) { showTokenDialog = false }
 
     if (confirmDelete) {
         AlertDialog(

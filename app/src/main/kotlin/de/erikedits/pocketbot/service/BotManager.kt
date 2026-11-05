@@ -47,7 +47,8 @@ class BotManager(
     fun start(id: String): Boolean {
         val token = repo.token(id)
         if (token == null) {
-            _problems.update { it + (id to "no_token") }
+            val problem = if (repo.hasStoredToken(id)) "token_unreadable: ${repo.lastSecureError() ?: "?"}" else "no_token"
+            _problems.update { it + (id to problem) }
             return false
         }
         _problems.update { it - id }

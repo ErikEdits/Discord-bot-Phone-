@@ -129,6 +129,12 @@
     <string name="vault_restored">%1$d Bot(s) wiederhergestellt.</string>
     <string name="vault_settings_text">In der Cloud gesicherte Bots kannst du auf jedem Handy mit deinem Discord-Account und deiner Tresor-PIN wiederherstellen.</string>
     <string name="dashboard_no_token">Für diesen Bot ist auf diesem Handy kein Token gespeichert. Stell ihn aus der Cloud wieder her oder leg ihn neu an.</string>
+    <string name="dashboard_token_unreadable">Der gespeicherte Token konnte auf diesem Handy nicht gelesen werden. Gib den Token neu ein. Technische Details:</string>
+    <string name="token_dialog_title">Token neu eingeben</string>
+    <string name="token_dialog_text">Füge den aktuellen Token von %1$s aus dem Developer Portal ein (Bot → Reset Token).</string>
+    <string name="token_dialog_save">Speichern &amp; starten</string>
+    <string name="token_dialog_wrong_bot">Dieser Token gehört zu einem anderen Bot, nicht zu %1$s.</string>
+    <string name="token_dialog_save_failed">Speichern des Tokens auf diesem Handy fehlgeschlagen:</string>
     <string name="dashboard_share_log">Log teilen</string>
     <string name="crash_title">Letzter Absturz</string>
     <string name="purpose_title">Wofür ist der Bot?</string>

@@ -18,16 +18,30 @@ import javax.crypto.spec.GCMParameterSpec
 class SecureStore(context: Context) {
     private val sp = context.getSharedPreferences("secure_store", Context.MODE_PRIVATE)
 
+    /** Last read/write failure (for diagnostics on the dashboard), e.g. "AEADBadTagException: …". */
+    @Volatile var lastError: String? = null
+        private set
+
+    fun contains(name: String): Boolean = sp.contains(name)
+
     @Synchronized
     fun put(name: String, value: String?) {
         if (value == null) {
             sp.edit { remove(name) }
             return
         }
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, key())
-        val encrypted = cipher.iv + cipher.doFinal(value.toByteArray(Charsets.UTF_8))
-        sp.edit { putString(name, Base64.encodeToString(encrypted, Base64.NO_WRAP)) }
+        try {
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            cipher.init(Cipher.ENCRYPT_MODE, key())
+            val iv = cipher.iv
+            check(iv.size == IV_SIZE) { "unexpected IV size ${iv.size}" }
+            val encrypted = iv + cipher.doFinal(value.toByteArray(Charsets.UTF_8))
+            // commit (not apply): the value must be on disk before e.g. the bot service reads it
+            sp.edit(commit = true) { putString(name, Base64.encodeToString(encrypted, Base64.NO_WRAP)) }
+        } catch (e: Exception) {
+            lastError = "write $name: ${e.javaClass.simpleName}: ${e.message}"
+            throw e
+        }
     }
 
     @Synchronized
@@ -39,8 +53,8 @@ class SecureStore(context: Context) {
             cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes, 0, IV_SIZE))
             String(cipher.doFinal(bytes, IV_SIZE, bytes.size - IV_SIZE), Charsets.UTF_8)
         } catch (e: Exception) {
-            // Key gone (e.g. app data restored on another phone) -> value is unusable.
-            sp.edit { remove(name) }
+            // Keep the stored value (a later attempt may work); report why it could not be read.
+            lastError = "read $name: ${e.javaClass.simpleName}: ${e.message}"
             null
         }
     }

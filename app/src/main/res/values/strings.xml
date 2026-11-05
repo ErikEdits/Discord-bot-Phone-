@@ -130,6 +130,12 @@
     <string name="vault_restored">%1$d bot(s) restored.</string>
     <string name="vault_settings_text">Bots saved in the cloud can be restored on any phone with your Discord account and vault PIN.</string>
     <string name="dashboard_no_token">No token is stored for this bot on this phone. Restore it from the cloud or create it again.</string>
+    <string name="dashboard_token_unreadable">The stored token could not be read on this phone. Enter the token again. Technical details:</string>
+    <string name="token_dialog_title">Enter token again</string>
+    <string name="token_dialog_text">Paste the current token of %1$s from the Developer Portal (Bot → Reset Token).</string>
+    <string name="token_dialog_save">Save &amp; start</string>
+    <string name="token_dialog_wrong_bot">This token belongs to a different bot, not %1$s.</string>
+    <string name="token_dialog_save_failed">Saving the token on this phone failed:</string>
     <string name="dashboard_share_log">Share log</string>
     <string name="crash_title">Last crash</string>
     <string name="purpose_title">What is the bot for?</string>

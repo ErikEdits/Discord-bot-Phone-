@@ -42,6 +42,15 @@ class BotRepository(context: Context, private val secure: SecureStore) {
 
     fun token(id: String): String? = secure.get(tokenKey(id))
 
+    /** True if an (encrypted) token entry exists, even if it can't be decrypted right now. */
+    fun hasStoredToken(id: String): Boolean = secure.contains(tokenKey(id))
+
+    /** Diagnostic text of the last secure-store failure. */
+    fun lastSecureError(): String? = secure.lastError
+
+    @Synchronized
+    fun setToken(id: String, token: String) = secure.put(tokenKey(id), token)
+
     @Synchronized
     fun upsert(bot: StoredBot, token: String? = null) {
         if (token != null) secure.put(tokenKey(bot.id), token)
