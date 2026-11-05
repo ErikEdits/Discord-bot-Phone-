@@ -28,5 +28,5 @@ class AppContainer(context: Context) {
     val bots = BotRepository(context, secure)
     val botManager = BotManager(bots, appScope)
 
-    val apiConfigured: Boolean get() = !BuildConfig.POCKETBOT_API_URL.contains("example.workers.dev")
+    val apiConfigured: Boolean get() = BuildConfig.POCKETBOT_API_URL.startsWith("https://")
 }

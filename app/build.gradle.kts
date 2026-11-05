@@ -11,7 +11,7 @@ plugins {
 // variable POCKETBOT_API_URL or the Gradle property pocketbot.apiUrl.
 val apiUrl: String = System.getenv("POCKETBOT_API_URL")?.takeIf { it.isNotBlank() }
     ?: (findProperty("pocketbot.apiUrl") as String?)
-    ?: "https://pocketbot-gateway.example.workers.dev"
+    ?: "https://pocketbot-gateway.erikbestemc-da62f9.workers.dev"
 
 // Signing from CI secrets (see .github/workflows/android.yml). Without them the
 // debug key is used for debug builds and release builds stay unsigned.
