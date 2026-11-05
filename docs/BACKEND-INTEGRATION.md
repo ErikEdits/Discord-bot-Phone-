@@ -46,7 +46,8 @@ Android-App ──HTTPS──► Cloudflare Worker "pocketbot-gateway"  (feste A
 Warum so? Erik hat **keine eigene Domain**. Ein Quick Tunnel (`cloudflared tunnel --url …`) ist
 kostenlos, bekommt aber bei jedem Start eine **neue zufällige** Adresse. Die App und die Discord-
 Redirect-URI brauchen eine **feste** Adresse → der Worker auf `workers.dev` ist der feste Eingang
-und merkt sich die aktuelle Tunnel-Adresse in Workers KV. Der Bot meldet sie nach jedem Tunnel-Start.
+und merkt sich die aktuelle Tunnel-Adresse in einer **D1**-Mini-Tabelle (Entscheidung Erik, 2026-11-05: D1 statt KV,
+damit der vorhandene Cloudflare-Token der MC-Logs reicht). Der Bot meldet sie nach jedem Tunnel-Start.
 Später mit eigener Domain: benannter Tunnel, der Worker bleibt oder fällt weg, die App-URL bleibt gleich.
 
 ## 2. Neue Dateien / Änderungen
@@ -62,10 +63,15 @@ Später mit eigener Domain: benannter Tunnel, der Worker bleibt oder fällt weg,
 | `pocketbot/gateway_worker.js` | Cloudflare-Worker-Quelltext (Abschnitt 5) |
 | `cogs/pocketbot.py` | Cog: startet App-API-Server + cloudflared, registriert Tunnel-URL beim Worker, Watchdog, Admin-Slash-Commands, Meldungen in Discord |
 | `bot.py` | Cog `cogs.pocketbot` in `EXTENSIONS` aufnehmen (beide Listen, falls zwei existieren) |
-| `Dockerfile` | `cloudflared`-Binary installieren (feste Version, Architektur beachten) + `COPY pocketbot/ ./pocketbot/` |
+| `Dockerfile` | `COPY pocketbot/ ./pocketbot/` (cloudflared lädt der Cog selbst, siehe unten; der Live-Betrieb läuft ohne Docker auf bot-hosting.net) |
 | `.env.example` | Neue Variablen (Abschnitt 3) |
 | `requirements.txt` | Nichts Neues nötig (FastAPI, uvicorn, aiohttp sind da). Optional `argon2-cffi` **nicht** nötig: die Krypto macht die App. |
 | `docs/POCKETBOT.md` | Kurze Betriebsanleitung für Erik (Einrichtung, Commands, Fehlerbehebung) |
+
+> **Update 2026-11-05:** Der Bot läuft live auf **bot-hosting.net** (Pterodactyl, Python 3.14), also ohne Docker.
+> Der Cog lädt `cloudflared` beim ersten Start selbst herunter (feste Version, Prüfsumme, Architektur erkennen,
+> Ablage `data/bin/`), startet ihn mit `--protocol http2` und räumt verwaiste Prozesse per PID-Datei auf
+> (Neustarts über `os.execv` rufen `cog_unload` nicht auf). Das Dockerfile-Beispiel unten ist nur für Docker-Betrieb.
 
 Dockerfile-Beispiel für cloudflared (amd64; Version beim Umsetzen auf eine aktuelle feste Version setzen):
 ```dockerfile
@@ -86,7 +92,7 @@ Läuft der Bot ohne Docker (Windows-PC, `start-bot.bat`), soll der Cog `cloudfla
 | `POCKETBOT_PORT` | `8081` | Port der App-API (bindet immer an `127.0.0.1`) |
 | `POCKETBOT_PUBLIC_URL` | `https://pocketbot-gateway.erik.workers.dev` | Feste Worker-Adresse. Wird bei `/pocketbot setup` automatisch gesetzt (in `data/pocketbot_gateway.json` gespeichert; die Variable überschreibt). |
 | `POCKETBOT_GATEWAY_SECRET` | *(zufällig, 48 Zeichen)* | Gemeinsames Geheimnis Worker ↔ Bot. Wird bei Setup erzeugt und in `data/pocketbot_gateway.json` gespeichert, falls nicht gesetzt. |
-| `CLOUDFLARE_API_TOKEN` | *(Token)* | Nur für das automatische Deployen des Workers. Rechte: `Account · Workers Scripts · Edit`, `Account · Workers KV Storage · Edit`, `Account · Account Settings · Read`. Alternativ wie bei mclog per Slash-Command eingeben (dann verschlüsselt/abgelegt wie dort). |
+| `CLOUDFLARE_API_TOKEN` | *(Token)* | Nur für das automatische Deployen des Workers. Rechte: `Account · Workers Scripts · Edit`, `Account · D1 · Edit`, `Account · Account Settings · Read`. **Der vorhandene mclog-Token (`data/settings.json` → `mclog_cloudflare`) hat genau diese Rechte und wird wiederverwendet.** Die Variable ist nur ein optionaler Override. |
 | `CLOUDFLARE_ACCOUNT_ID` | *(optional)* | Sonst automatisch ermittelt |
 | `POCKETBOT_REPORT_CHANNEL_ID` | `123…` | Kanal für Marktplatz-Meldungen und Status-Alarme (optional; sonst DM an `OWNER_ID`) |
 | `POCKETBOT_CLOUDFLARED_PATH` | `cloudflared` | Pfad zum Binary |
@@ -239,12 +245,12 @@ Validierung (`pocketbot/validate.py`):
 
 ## 5. Cloudflare Worker `pocketbot-gateway`
 
-`pocketbot/gateway_worker.js` (ES-Module-Syntax), KV-Binding `KV`, Secret-Binding `GATEWAY_SECRET`:
+`pocketbot/gateway_worker.js` (ES-Module-Syntax), D1-Binding `DB` (Tabelle `origin(id INTEGER PRIMARY KEY CHECK(id=1), url TEXT, updated_at INTEGER)`), Secret-Binding `GATEWAY_SECRET`:
 
 - `POST /_gateway/register` mit Header `Authorization: Bearer <GATEWAY_SECRET>`, Body `{"origin":"https://xyz.trycloudflare.com"}`
-  → nur `https://*.trycloudflare.com` (oder später eigene Domain) akzeptieren → `KV.put("origin", …)` → `{"ok":true}`.
+  → nur `https://*.trycloudflare.com` (oder später eigene Domain) akzeptieren → `INSERT OR REPLACE INTO origin(id,url,updated_at) VALUES(1,?,?)` → `{"ok":true}`.
 - `GET /_gateway/status` (Bearer) → `{"origin":…, "updated_at":…}`.
-- Alle anderen Pfade: `origin` aus KV holen (pro Isolate 30 s im Speicher cachen), Request 1:1 weiterleiten
+- Alle anderen Pfade: `origin` aus D1 holen (pro Isolate 30 s im Speicher cachen), Request 1:1 weiterleiten
   (Methode, Pfad, Query, Body, Header außer `Host`), zusätzlich setzen:
   `X-PocketBot-Gateway-Key: <GATEWAY_SECRET>` und `X-PocketBot-Client-IP: <CF-Connecting-IP>`.
   Eingehende Header mit diesen Namen vorher **entfernen** (Spoofing-Schutz).
@@ -253,10 +259,10 @@ Validierung (`pocketbot/validate.py`):
 - Kein CORS nötig (nur die native App spricht mit der API).
 
 Deploy-Automatik im Cog (Muster aus `cogs/mclog_cloudflare.py` → `cf_call`, `setup_mailbox` wiederverwenden):
-1. Account-ID ermitteln → 2. KV-Namespace `pocketbot_gateway` anlegen/finden → 3. Worker `pocketbot-gateway`
-   hochladen (Multipart mit `metadata.json`: `main_module`, Bindings `kv_namespace` **KV** und `secret_text` **GATEWAY_SECRET**)
+1. Account-ID ermitteln → 2. D1-Datenbank `pocketbot_gateway` anlegen/finden + Tabelle `origin` anlegen → 3. Worker `pocketbot-gateway`
+   hochladen (Multipart mit `metadata.json`: `main_module`, Bindings `d1` **DB** und `secret_text` **GATEWAY_SECRET**)
    → 4. workers.dev-Subdomain ermitteln/aktivieren → 5. Health-Check `GET <url>/_gateway/status`.
-Ergebnis in `data/pocketbot_gateway.json` speichern (`url`, `account_id`, `kv_id`, `secret`), Datei nur lesbar für den Bot.
+Ergebnis in `data/pocketbot_gateway.json` speichern (`url`, `account_id`, `d1_id`, `secret`), Datei nur lesbar für den Bot.
 
 ## 6. Cog `cogs/pocketbot.py`
 
@@ -276,7 +282,7 @@ Slash-Commands (nur Owner/Administratoren), Gruppe `/pocketbot`:
 | Command | Funktion |
 |---|---|
 | `/pocketbot guide` | Schritt-für-Schritt: Cloudflare-Konto, API-Token mit den 3 Rechten, Redirect-URL im Developer Portal |
-| `/pocketbot setup [cloudflare_token]` | Worker + KV deployen (Token aus Argument oder `CLOUDFLARE_API_TOKEN`), Secret erzeugen, URL anzeigen, **Redirect-URL zum Kopieren** anzeigen. Antworten ephemeral. |
+| `/pocketbot setup [cloudflare_token]` | Worker + D1 deployen (Token aus Argument oder `CLOUDFLARE_API_TOKEN`), Secret erzeugen, URL anzeigen, **Redirect-URL zum Kopieren** anzeigen. Antworten ephemeral. |
 | `/pocketbot status` | Worker-URL, Tunnel-URL, online?, Nutzerzahl, Sessions aktiv, Tresor-Einträge, Marktplatz-Einträge, offene Meldungen |
 | `/pocketbot restart-tunnel` | cloudflared neu starten |
 | `/pocketbot config key value` | Remote-Config-Feld setzen (z.B. `min_app_version`, `donate_url`, `announcement`) |
