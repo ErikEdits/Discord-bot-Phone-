@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -139,18 +141,28 @@ class JdaBotEngine(
         }
     }
 
+    private fun registerCommands(guild: Guild) {
+        guild.updateCommands()
+            .addCommands(
+                Commands.slash("ping", "Check whether the bot is alive (PocketBot)")
+                    .setDescriptionLocalization(DiscordLocale.GERMAN, "Prüft, ob der Bot läuft (PocketBot)"),
+            )
+            .queue(
+                { logBuffer.info("Slash commands ready on ${guild.name}.") },
+                { logBuffer.warn("Slash commands on ${guild.name} failed: ${it.message} (was the bot invited with 'applications.commands'?)") },
+            )
+    }
+
     private inner class Listener : ListenerAdapter() {
         override fun onReady(event: ReadyEvent) {
             val api = event.jda
             _state.update { it.copy(status = BotStatus.ONLINE, onlineSince = clock(), error = null) }
             refreshStats(api)
             logBuffer.info("Online as ${api.selfUser.name} on ${event.guildTotalCount} server(s).")
-            api.updateCommands()
-                .addCommands(Commands.slash("ping", "Check whether the bot is alive (PocketBot)"))
-                .queue(
-                    { logBuffer.info("Slash commands registered.") },
-                    { logBuffer.warn("Registering slash commands failed: ${it.message}") },
-                )
+            // Guild commands show up instantly (global ones can take a while and need a client reload).
+            // Clear old global commands so nothing appears twice.
+            api.updateCommands().queue(null) { logBuffer.warn("Clearing global commands failed: ${it.message}") }
+            api.guildCache.forEach(::registerCommands)
             synchronized(lock) {
                 pingTask?.cancel(false)
                 pingTask = worker.scheduleWithFixedDelay({ runCatching { refreshStats(api) } }, 30, 30, TimeUnit.SECONDS)
@@ -177,6 +189,7 @@ class JdaBotEngine(
         override fun onGuildJoin(event: GuildJoinEvent) {
             refreshStats(event.jda)
             logBuffer.info("Added to server: ${event.guild.name}")
+            registerCommands(event.guild)
             _events.tryEmit(EngineEvent.JoinedGuild(event.guild.name, event.guild.memberCount))
         }
 
