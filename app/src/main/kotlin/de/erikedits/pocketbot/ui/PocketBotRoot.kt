@@ -13,6 +13,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import de.erikedits.pocketbot.data.AppContainer
 import de.erikedits.pocketbot.data.AuthState
+import de.erikedits.pocketbot.ui.editor.RuleEditorScreen
+import de.erikedits.pocketbot.ui.editor.RulesScreen
 import de.erikedits.pocketbot.ui.screens.BotListScreen
 import de.erikedits.pocketbot.ui.screens.CreateBotScreen
 import de.erikedits.pocketbot.ui.screens.DashboardScreen
@@ -57,9 +59,26 @@ private fun MainNav(container: AppContainer) {
             )
         }
         composable("bot/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+            val id = entry.arguments?.getString("id").orEmpty()
             DashboardScreen(
                 container = container,
-                botId = entry.arguments?.getString("id").orEmpty(),
+                botId = id,
+                onBack = { nav.popBackStack() },
+                onOpenRules = { nav.navigate("bot/$id/rules") },
+            )
+        }
+        composable("bot/{id}/rules", arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+            val id = entry.arguments?.getString("id").orEmpty()
+            RulesScreen(container, id, onBack = { nav.popBackStack() }, onEdit = { ruleId -> nav.navigate("bot/$id/rule/$ruleId") })
+        }
+        composable(
+            "bot/{id}/rule/{ruleId}",
+            arguments = listOf(navArgument("id") { type = NavType.StringType }, navArgument("ruleId") { type = NavType.StringType }),
+        ) { entry ->
+            RuleEditorScreen(
+                container,
+                entry.arguments?.getString("id").orEmpty(),
+                entry.arguments?.getString("ruleId").orEmpty(),
                 onBack = { nav.popBackStack() },
             )
         }

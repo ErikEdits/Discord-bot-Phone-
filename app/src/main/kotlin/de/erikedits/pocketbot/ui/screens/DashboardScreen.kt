@@ -61,12 +61,15 @@ import java.util.Date
 /** Per-bot dashboard (SPEC 4.5): status, uptime, ping, logs, data usage. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) {
+fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit, onOpenRules: () -> Unit) {
     val context = LocalContext.current
     val bots by container.bots.bots.collectAsStateWithLifecycle()
     val bot = bots.firstOrNull { it.id == botId }
     val states by container.botManager.states.collectAsStateWithLifecycle()
     val problems by container.botManager.problems.collectAsStateWithLifecycle()
+    val configs by container.configs.configs.collectAsStateWithLifecycle()
+    val initialConfig = remember(botId) { container.configs.get(botId) }
+    val functionCount = (configs[botId] ?: initialConfig).rules.count { it.enabled }
     val state = states[botId] ?: EngineState()
     val engine = container.botManager.engine(botId)
     val emptyLogs = remember { MutableStateFlow(container.botManager.savedLog(botId)) }
@@ -148,6 +151,12 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
                 }
             }
             item {
+                SectionCard(title = stringResource(R.string.dashboard_functions)) {
+                    Text(stringResource(R.string.dashboard_functions_text, functionCount), style = MaterialTheme.typography.bodyMedium)
+                    Button(onClick = onOpenRules, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.dashboard_functions_edit)) }
+                }
+            }
+            item {
                 SectionCard(title = stringResource(R.string.dashboard_stats)) {
                     StatRow(stringResource(R.string.dashboard_uptime), state.onlineSince?.let { formatDuration(now - it) } ?: "–")
                     StatRow(stringResource(R.string.dashboard_ping), if (state.pingMs >= 0 && state.status == BotStatus.ONLINE) "${state.pingMs} ms" else "–")
@@ -222,7 +231,7 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit) 
             confirmButton = {
                 TextButton(onClick = {
                     confirmDelete = false
-                    container.botManager.remove(botId)
+                    container.botManager.deleteData(botId)
                     container.bots.delete(botId)
                 }) { Text(stringResource(R.string.dashboard_delete), color = PbColors.Red) }
             },

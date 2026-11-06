@@ -153,6 +153,7 @@ class BotRuntimeService : LifecycleService() {
             is EngineEvent.JoinedGuild -> Notifications.alert(this, getString(R.string.alert_joined_title, name), getString(R.string.alert_joined_text, event.guildName, event.memberCount))
             EngineEvent.InvalidToken -> Notifications.alert(this, getString(R.string.alert_invalid_token_title, name), getString(R.string.alert_invalid_token_text))
             is EngineEvent.Crashed -> Notifications.alert(this, getString(R.string.alert_crashed_title, name), getString(R.string.alert_crashed_text, event.reason))
+            is EngineEvent.Notify -> Notifications.alert(this, name, event.text)
         }
     }
 

@@ -26,7 +26,8 @@ class AppContainer(context: Context) {
     val discord = DiscordRest(http)
     val auth = AuthRepository(api, secure, prefs)
     val bots = BotRepository(context, secure)
-    val botManager = BotManager(bots, appScope, logDir = java.io.File(context.filesDir, "logs"))
+    val configs = ConfigRepository(context)
+    val botManager = BotManager(bots, configs, appScope, dataDir = context.filesDir)
     val vault = VaultRepository(api, secure, bots)
     val crashLog = CrashLog(context)
 

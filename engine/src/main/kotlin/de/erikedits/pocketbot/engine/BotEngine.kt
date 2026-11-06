@@ -25,6 +25,8 @@ data class LogEntry(val time: Long, val level: LogLevel, val message: String)
 
 /** One-off things the app turns into push notifications. */
 sealed interface EngineEvent {
+    /** Action "Push an mich" from a rule. */
+    data class Notify(val text: String) : EngineEvent
     data class JoinedGuild(val guildName: String, val memberCount: Int) : EngineEvent
     data object InvalidToken : EngineEvent
     data class Crashed(val reason: String) : EngineEvent
@@ -44,4 +46,14 @@ interface BotEngine {
 
     /** Disconnects; [pause] keeps status PAUSED (battery protection) instead of STOPPED. */
     fun stop(pause: Boolean = false)
+
+    /** Applies edited rules while running (re-registers commands, reconnects if intents changed). */
+    fun updateConfig(config: de.erikedits.pocketbot.shared.config.BotConfig)
+
+    /** Servers with channels and roles, for the pickers in the editor (empty while offline). */
+    fun snapshot(): List<GuildInfo>
 }
+
+data class NamedId(val id: String, val name: String)
+
+data class GuildInfo(val id: String, val name: String, val channels: List<NamedId>, val roles: List<NamedId>)

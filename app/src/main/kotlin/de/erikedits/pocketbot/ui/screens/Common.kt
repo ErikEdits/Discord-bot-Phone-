@@ -67,6 +67,15 @@ fun statusColor(status: BotStatus): Color = when (status) {
 }
 
 @StringRes
+fun categoryLabel(key: String): Int = when (key) {
+    "moderation" -> R.string.purpose_cat_moderation
+    "community" -> R.string.purpose_cat_community
+    "support" -> R.string.purpose_cat_support
+    "gaming" -> R.string.purpose_cat_gaming
+    else -> R.string.purpose_cat_other
+}
+
+@StringRes
 fun statusLabel(status: BotStatus): Int = when (status) {
     BotStatus.STOPPED -> R.string.status_stopped
     BotStatus.CONNECTING -> R.string.status_connecting

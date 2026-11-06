@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -56,7 +57,12 @@ import de.erikedits.pocketbot.data.StoredBot
 import de.erikedits.pocketbot.service.BotRuntimeService
 import de.erikedits.pocketbot.shared.api.DefaultHosters
 import de.erikedits.pocketbot.shared.api.Hoster
+import de.erikedits.pocketbot.shared.config.BotConfig
+import de.erikedits.pocketbot.shared.config.Templates
+import de.erikedits.pocketbot.shared.config.requiredIntents
 import de.erikedits.pocketbot.shared.discord.BotIdentity
+import de.erikedits.pocketbot.shared.discord.PrivilegedIntent
+import de.erikedits.pocketbot.shared.discord.missing
 import de.erikedits.pocketbot.shared.discord.BotToken
 import de.erikedits.pocketbot.shared.discord.InviteLink
 import de.erikedits.pocketbot.shared.discord.TokenCheckResult
@@ -86,6 +92,8 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
     var useCloud by rememberSaveable { mutableStateOf(false) }
     var newPin by remember { mutableStateOf<String?>(null) }
     val categories = remember { mutableStateListOf<String>() }
+    var useTemplate by rememberSaveable { mutableStateOf(true) }
+    val language = LocalConfiguration.current.locales[0].language
 
     fun back() {
         if (step == Step.TUTORIAL) onBack() else step = Step.entries[step.ordinal - 1]
@@ -138,6 +146,9 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
                         multiServer = multiServer,
                         onMultiServer = { multiServer = it },
                         categories = categories,
+                        useTemplate = useTemplate,
+                        onUseTemplate = { useTemplate = it },
+                        language = language,
                         onNext = { step = Step.INVITE },
                     )
                     Step.INVITE -> {
@@ -159,6 +170,11 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
                                     token = cleaned,
                                 )
                                 container.botManager.remove(bot.applicationId) // token may have changed
+                                if (useTemplate && categories.isNotEmpty()) {
+                                    var config = container.configs.get(bot.applicationId)
+                                    categories.forEach { config = Templates.merge(config, Templates.forCategory(it, language)) }
+                                    container.configs.save(bot.applicationId, config)
+                                }
                                 BotRuntimeService.startBot(context, bot.applicationId)
                                 if (useCloud) {
                                     newPin?.let { container.vault.setPin(it) }
@@ -344,6 +360,9 @@ private fun PurposeStep(
     multiServer: Boolean,
     onMultiServer: (Boolean) -> Unit,
     categories: MutableList<String>,
+    useTemplate: Boolean,
+    onUseTemplate: (Boolean) -> Unit,
+    language: String,
     onNext: () -> Unit,
 ) {
     Text(stringResource(R.string.purpose_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -372,7 +391,32 @@ private fun PurposeStep(
             )
         }
     }
-    Text(stringResource(R.string.purpose_templates_soon), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    if (categories.isNotEmpty()) {
+        val templateConfig = remember(categories.toList(), language) {
+            var c = BotConfig()
+            categories.forEach { c = Templates.merge(c, Templates.forCategory(it, language)) }
+            c
+        }
+        SectionCard {
+            Row(
+                Modifier.fillMaxWidth().selectable(selected = useTemplate, onClick = { onUseTemplate(!useTemplate) }, role = Role.Checkbox),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(checked = useTemplate, onCheckedChange = null)
+                Column(Modifier.padding(start = 8.dp)) {
+                    Text(stringResource(R.string.purpose_use_template, templateConfig.rules.size), fontWeight = FontWeight.SemiBold)
+                    Text(templateConfig.rules.joinToString(", ") { it.name }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            val missing = identity?.intents?.missing(templateConfig.requiredIntents()).orEmpty()
+            if (useTemplate && missing.isNotEmpty()) {
+                Text(stringResource(R.string.purpose_template_intents), style = MaterialTheme.typography.bodySmall, color = PbColors.Yellow)
+                if (PrivilegedIntent.MESSAGE_CONTENT in missing) Text("• " + stringResource(R.string.intent_message_content), style = MaterialTheme.typography.bodySmall, color = PbColors.Yellow)
+                if (PrivilegedIntent.SERVER_MEMBERS in missing) Text("• " + stringResource(R.string.intent_server_members), style = MaterialTheme.typography.bodySmall, color = PbColors.Yellow)
+            }
+        }
+    }
+    Text(stringResource(R.string.purpose_templates_later), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Button(onClick = onNext, modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(if (recommend) R.string.purpose_phone_anyway else R.string.next))
     }

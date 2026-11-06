@@ -1,6 +1,8 @@
 package de.erikedits.pocketbot.service
 
 import de.erikedits.pocketbot.data.BotRepository
+import de.erikedits.pocketbot.data.ConfigRepository
+import de.erikedits.pocketbot.shared.config.BotConfig
 import de.erikedits.pocketbot.engine.BotEngine
 import de.erikedits.pocketbot.engine.BotStatus
 import de.erikedits.pocketbot.engine.EngineEvent
@@ -27,10 +29,13 @@ data class BotEvent(val botId: String, val event: EngineEvent)
 /** Owns one engine per bot. The foreground service keeps the process alive while any is active. */
 class BotManager(
     private val repo: BotRepository,
+    private val configs: ConfigRepository,
     private val scope: CoroutineScope,
-    /** Folder for per-bot log files that survive crashes (null = memory only). */
-    private val logDir: File? = null,
-    private val engineFactory: (id: String, token: String, logFile: File?) -> BotEngine = { _, token, file -> JdaBotEngine(token, logFile = file) },
+    /** Folder for per-bot log and variable files (null = memory only). */
+    private val dataDir: File? = null,
+    private val engineFactory: (id: String, token: String, config: BotConfig, dir: File?) -> BotEngine = { id, token, config, dir ->
+        JdaBotEngine(token, config, logFile = dir?.let { File(it, "logs/$id.log") }, varsFile = dir?.let { File(it, "vars/$id.json") })
+    },
 ) {
     private class Entry(val engine: BotEngine, val token: String, val jobs: List<Job>)
 
@@ -49,7 +54,20 @@ class BotManager(
     fun engine(id: String): BotEngine? = entries[id]?.engine
 
     /** Log of the last run from disk, e.g. after the app crashed. */
-    fun savedLog(id: String): List<LogEntry> = logDir?.let { LogFile.read(File(it, "$id.log")) } ?: emptyList()
+    fun savedLog(id: String): List<LogEntry> = dataDir?.let { LogFile.read(File(it, "logs/$id.log")) } ?: emptyList()
+
+    /** Saves edited functions and applies them to the running bot right away. */
+    fun saveConfig(id: String, config: BotConfig) {
+        configs.save(id, config)
+        entries[id]?.engine?.updateConfig(config)
+    }
+
+    /** Removes the bot's rules, variables and log (bot deleted). */
+    fun deleteData(id: String) {
+        remove(id)
+        configs.delete(id)
+        dataDir?.let { File(it, "vars/$id.json").delete(); File(it, "logs/$id.log").delete() }
+    }
 
     /** Safe mode after a crash: don't auto-restart anything. */
     fun clearAutoStart() = repo.bots.value.forEach { repo.setShouldRun(it.id, false) }
@@ -98,7 +116,7 @@ class BotManager(
     fun activeCount(): Int = entries.values.count { it.engine.state.value.status.isActive }
 
     private fun create(id: String, token: String): Entry {
-        val engine = engineFactory(id, token, logDir?.let { File(it, "$id.log") })
+        val engine = engineFactory(id, token, configs.get(id), dataDir)
         val jobs = listOf(
             scope.launch { engine.state.collect { s -> _states.update { it + (id to s) } } },
             scope.launch {
