@@ -1,5 +1,10 @@
 package de.erikedits.pocketbot.engine
 
+import de.erikedits.pocketbot.engine.modules.BotModule
+import de.erikedits.pocketbot.engine.modules.ControlInput
+import de.erikedits.pocketbot.engine.modules.ImageRenderer
+import de.erikedits.pocketbot.engine.modules.ModuleContext
+import de.erikedits.pocketbot.engine.modules.ModulePanel
 import de.erikedits.pocketbot.engine.rules.ActionExecutor
 import de.erikedits.pocketbot.engine.rules.Facts
 import de.erikedits.pocketbot.engine.rules.FileVariableStore
@@ -57,6 +62,8 @@ import java.io.File
 import java.time.Duration
 import java.util.EnumSet
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import okhttp3.OkHttpClient
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import net.dv8tion.jda.api.interactions.commands.OptionType as JdaOptionType
@@ -72,6 +79,11 @@ class JdaBotEngine(
     logFile: File? = null,
     /** Optional file for the bot's variables (coins, XP …). */
     varsFile: File? = null,
+    modules: List<BotModule> = emptyList(),
+    private val http: OkHttpClient = OkHttpClient(),
+    private val renderer: ImageRenderer? = null,
+    /** Per-bot data folder (image collection …). */
+    private val dataDir: File? = null,
 ) : BotEngine {
 
     private val _state = MutableStateFlow(EngineState())
@@ -83,9 +95,25 @@ class JdaBotEngine(
     private val _events = MutableSharedFlow<EngineEvent>(extraBufferCapacity = 16)
     override val events: SharedFlow<EngineEvent> = _events.asSharedFlow()
 
-    private val runner = RuleRunner(config, FileVariableStore(varsFile), clock = clock)
+    private val store = FileVariableStore(varsFile)
+    private val runner = RuleRunner(config, store, clock = clock)
+    @Volatile private var modules: List<BotModule> = emptyList()
 
-    private val worker = Executors.newScheduledThreadPool(1) { r -> Thread(r, "pocketbot-engine").apply { isDaemon = true } }
+    private val moduleContext = object : ModuleContext {
+        override fun jda(): JDA? = jda
+        override fun log(level: LogLevel, message: String) = logBuffer.add(level, message)
+        override val store: FileVariableStore get() = this@JdaBotEngine.store
+        override val dataDir: File? get() = this@JdaBotEngine.dataDir
+        override val http: OkHttpClient get() = this@JdaBotEngine.http
+        override val scheduler: ScheduledExecutorService get() = worker
+        override val renderer: ImageRenderer? get() = this@JdaBotEngine.renderer
+        override fun notify(text: String) { _events.tryEmit(EngineEvent.Notify(text)) }
+        override fun execute(block: () -> Unit) = ruleThreads.execute {
+            try { block() } catch (e: Throwable) { logBuffer.error("Module task failed: ${e.shortTrace(3)}") }
+        }
+    }
+
+    private val worker: ScheduledExecutorService = Executors.newScheduledThreadPool(2) { r -> Thread(r, "pocketbot-engine").apply { isDaemon = true } }
     private val ruleThreads = Executors.newCachedThreadPool { r -> Thread(r, "pocketbot-rules").apply { isDaemon = true } }
     private val lock = Any()
     private var jda: JDA? = null
@@ -97,9 +125,13 @@ class JdaBotEngine(
     /** Set while we shut JDA down on purpose, so the ShutdownEvent is not reported as a crash. */
     @Volatile private var stopping = false
 
-    private fun intentsFor(config: BotConfig): Set<GatewayIntent> {
+    init {
+        this.modules = modules.onEach { it.ctx = moduleContext }
+    }
+
+    private fun intentsFor(config: BotConfig, mods: List<BotModule> = modules): Set<GatewayIntent> {
         val set = EnumSet.of(GatewayIntent.GUILD_MESSAGES)
-        val needed = config.requiredIntents()
+        val needed = config.requiredIntents() + mods.flatMap { it.requiredIntents() }
         if (PrivilegedIntent.MESSAGE_CONTENT in needed) set += GatewayIntent.MESSAGE_CONTENT
         if (PrivilegedIntent.SERVER_MEMBERS in needed) set += GatewayIntent.GUILD_MEMBERS
         return set
@@ -163,6 +195,7 @@ class JdaBotEngine(
             connectWatch?.cancel(false)
             connectWatch = null
             cancelIntervals()
+            modules.forEach { runCatching { it.stop() } }
             _state.value = EngineState(status = if (pause) BotStatus.PAUSED else BotStatus.STOPPED)
         }
         logBuffer.info(if (pause) "Paused." else "Stopped.")
@@ -175,10 +208,18 @@ class JdaBotEngine(
         }
     }
 
-    override fun updateConfig(config: BotConfig) {
+    override fun updateConfig(config: BotConfig) = updateSetup(config, modules)
+
+    override fun updateSetup(config: BotConfig, modules: List<BotModule>) {
+        val old = this.modules
+        if (modules !== old) {
+            old.forEach { runCatching { it.stop() } }
+            modules.forEach { it.ctx = moduleContext }
+            this.modules = modules
+        }
         runner.config = config
         val api = jda ?: return
-        if (intentsFor(config) != connectedIntents) {
+        if (intentsFor(config, modules) != connectedIntents) {
             logBuffer.info("Functions changed and need other intents – reconnecting …")
             worker.execute {
                 stop()
@@ -187,9 +228,24 @@ class JdaBotEngine(
             }
             return
         }
-        logBuffer.info("Functions updated (${config.rules.count { it.enabled }} active).")
+        logBuffer.info("Bot updated (${modules.size} module(s), ${config.rules.count { it.enabled }} rule(s)).")
         api.guildCache.forEach(::registerCommands)
         scheduleIntervals(api)
+        if (modules !== old) modules.forEach { m -> runCatching { m.onReady(api) }.onFailure { logBuffer.warn("[${m.typeId}] start: ${it.message}") } }
+    }
+
+    override fun panels(lang: String): List<ModulePanel> = modules.map { m ->
+        runCatching { m.panel(lang) }.getOrElse { ModulePanel(m.typeId, listOf("⚠️ ${it.message}")) }
+    }
+
+    override fun perform(typeId: String, action: String, item: String?, input: ControlInput, lang: String): String {
+        val module = modules.firstOrNull { it.typeId == typeId } ?: return "?"
+        return try {
+            module.perform(action, item, input, lang).also { logBuffer.info("[$typeId] $action: $it") }
+        } catch (e: Throwable) {
+            logBuffer.error("[$typeId] $action failed: ${e.shortTrace(3)}")
+            "⚠️ " + (e.message ?: e.javaClass.simpleName)
+        }
     }
 
     override fun snapshot(): List<GuildInfo> {
@@ -218,15 +274,18 @@ class JdaBotEngine(
 
     // ------------------------------------------------------------------ commands
 
-    private fun buildCommands(): List<CommandData> {
-        val custom = runner.config.slashCommands().map { cmd ->
+    private fun buildCommands(guild: Guild): List<CommandData> {
+        val fromModules = modules.flatMap { m -> runCatching { m.commands(guild) }.getOrElse { logBuffer.warn("[${m.typeId}] commands: ${it.message}"); emptyList() } }
+            .distinctBy { it.name }
+        val taken = fromModules.map { it.name }.toSet()
+        val custom = runner.config.slashCommands().filter { it.name !in taken }.map { cmd ->
             val data = Commands.slash(cmd.name, cmd.description.ifBlank { cmd.name }.take(100))
             cmd.options.filter { it.name.isNotBlank() }.sortedBy { !it.required }.forEach { o ->
                 data.addOption(o.type.toJda(), o.name.lowercase().take(32), o.description.ifBlank { o.name }.take(100), o.required)
             }
             data
         }
-        val ping = if (custom.none { it.name == "ping" }) {
+        val ping = if (custom.none { it.name == "ping" } && "ping" !in taken) {
             listOf(
                 Commands.slash("ping", "Check whether the bot is alive (PocketBot)")
                     .setDescriptionLocalization(DiscordLocale.GERMAN, "Prüft, ob der Bot läuft (PocketBot)"),
@@ -234,7 +293,7 @@ class JdaBotEngine(
         } else {
             emptyList()
         }
-        return ping + custom
+        return (ping + fromModules + custom).take(100)
     }
 
     private fun OptionType.toJda(): JdaOptionType = when (this) {
@@ -248,7 +307,7 @@ class JdaBotEngine(
 
     private fun registerCommands(guild: Guild) {
         val commands = try {
-            buildCommands()
+            buildCommands(guild)
         } catch (e: Exception) {
             logBuffer.error("A command is invalid: ${e.message}")
             return
@@ -445,6 +504,7 @@ class JdaBotEngine(
             api.updateCommands().queue(null) { logBuffer.warn("Clearing global commands failed: ${it.message}") }
             api.guildCache.forEach(::registerCommands)
             scheduleIntervals(api)
+            modules.forEach { m -> runCatching { m.onReady(api) }.onFailure { logBuffer.warn("[${m.typeId}] start: ${it.message}") } }
             synchronized(lock) {
                 pingTask?.cancel(false)
                 pingTask = worker.scheduleWithFixedDelay({ runCatching { refreshStats(api) } }, 30, 30, TimeUnit.SECONDS)
@@ -472,6 +532,7 @@ class JdaBotEngine(
             refreshStats(event.jda)
             logBuffer.info("Added to server: ${event.guild.name}")
             registerCommands(event.guild)
+            modules.forEach { m -> runCatching { m.onGuildJoin(event.guild) } }
             _events.tryEmit(EngineEvent.JoinedGuild(event.guild.name, event.guild.memberCount))
         }
 
@@ -481,6 +542,10 @@ class JdaBotEngine(
         }
 
         override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
+            for (m in modules) {
+                val handled = try { m.onSlash(event) } catch (e: Throwable) { logBuffer.error("[${m.typeId}] /${event.name}: ${e.shortTrace(3)}"); false }
+                if (handled) { logBuffer.info("/${event.name} by ${event.user.name}"); return }
+            }
             val matches = runner.matching(TriggerEvent.Slash(event.name))
             if (matches.isEmpty()) {
                 if (event.name == "ping") {
@@ -503,6 +568,10 @@ class JdaBotEngine(
         }
 
         override fun onButtonInteraction(event: ButtonInteractionEvent) {
+            for (m in modules) {
+                val handled = try { m.onButton(event) } catch (e: Throwable) { logBuffer.error("[${m.typeId}] button: ${e.shortTrace(3)}"); false }
+                if (handled) return
+            }
             val id = event.componentId.removePrefix("pb:")
             if (!event.componentId.startsWith("pb:")) return
             val matches = runner.matching(TriggerEvent.Button(id))
@@ -522,6 +591,7 @@ class JdaBotEngine(
 
         override fun onMessageReceived(event: MessageReceivedEvent) {
             if (event.author.isBot || !event.isFromGuild) return
+            modules.forEach { m -> runCatching { m.onMessage(event) }.onFailure { logBuffer.warn("[${m.typeId}] message: ${it.message}") } }
             val matches = runner.matching(TriggerEvent.Message(event.message.contentRaw))
             if (matches.isEmpty()) return
             val channel = event.channel as? GuildMessageChannel
@@ -533,6 +603,7 @@ class JdaBotEngine(
         }
 
         override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
+            modules.forEach { m -> runCatching { m.onMemberJoin(event) }.onFailure { logBuffer.warn("[${m.typeId}] join: ${it.message}") } }
             val matches = runner.matching(TriggerEvent.Join)
             if (matches.isEmpty()) return
             val facts = factsOf(event.user, event.member, event.guild, null)
@@ -543,6 +614,7 @@ class JdaBotEngine(
         }
 
         override fun onGuildMemberRemove(event: GuildMemberRemoveEvent) {
+            modules.forEach { m -> runCatching { m.onMemberLeave(event) }.onFailure { logBuffer.warn("[${m.typeId}] leave: ${it.message}") } }
             val matches = runner.matching(TriggerEvent.Leave)
             if (matches.isEmpty()) return
             val facts = factsOf(event.user, event.member, event.guild, null)

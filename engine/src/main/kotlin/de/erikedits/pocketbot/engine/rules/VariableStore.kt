@@ -34,6 +34,10 @@ class FileVariableStore(private val file: File?) : VariableStore {
 
     override fun set(key: String, value: String) {
         values[key] = value
+        persist()
+    }
+
+    private fun persist() {
         val target = file ?: return
         synchronized(lock) {
             runCatching {
@@ -46,4 +50,10 @@ class FileVariableStore(private val file: File?) : VariableStore {
     }
 
     fun snapshot(): Map<String, String> = HashMap(values)
+
+    fun keys(prefix: String): List<String> = values.keys.filter { it.startsWith(prefix) }
+
+    fun remove(key: String) {
+        if (values.remove(key) != null) persist()
+    }
 }

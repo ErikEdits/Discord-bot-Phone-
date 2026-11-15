@@ -52,6 +52,15 @@ interface BotEngine {
 
     /** Servers with channels and roles, for the pickers in the editor (empty while offline). */
     fun snapshot(): List<GuildInfo>
+
+    /** Replaces rules and modules (bot types changed in the app). */
+    fun updateSetup(config: de.erikedits.pocketbot.shared.config.BotConfig, modules: List<de.erikedits.pocketbot.engine.modules.BotModule>)
+
+    /** Control panels of the modules for the app dashboard. */
+    fun panels(lang: String): List<de.erikedits.pocketbot.engine.modules.ModulePanel>
+
+    /** Runs an app control of a module (blocking, call off the main thread). */
+    fun perform(typeId: String, action: String, item: String?, input: de.erikedits.pocketbot.engine.modules.ControlInput, lang: String): String
 }
 
 data class NamedId(val id: String, val name: String)
