@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.erikedits.pocketbot.R
 import de.erikedits.pocketbot.data.AppContainer
 import de.erikedits.pocketbot.engine.GuildInfo
@@ -59,7 +60,7 @@ fun ModulePanels(container: AppContainer, botId: String) {
     val context = LocalContext.current
     val lang = currentLanguage()
     val scope = rememberCoroutineScope()
-    val catalog = container.catalog.catalog.value
+    val catalog by container.catalog.catalog.collectAsStateWithLifecycle()
     var panels by remember { mutableStateOf<List<ModulePanel>>(emptyList()) }
     var refresh by remember { mutableIntStateOf(0) }
     var pending by remember { mutableStateOf<Pending?>(null) }

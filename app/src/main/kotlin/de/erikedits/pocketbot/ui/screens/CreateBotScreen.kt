@@ -47,6 +47,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.erikedits.pocketbot.R
 import de.erikedits.pocketbot.data.AppContainer
 import de.erikedits.pocketbot.data.StoredBot
@@ -404,7 +405,7 @@ private fun HosterRecommendation() {
 private fun InviteStep(container: AppContainer, bot: BotIdentity, setup: BotSetup, onFinish: () -> Unit) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
-    val catalog = container.catalog.catalog.value
+    val catalog by container.catalog.catalog.collectAsStateWithLifecycle()
     val lang = LocalConfiguration.current.locales[0].language
     val req = remember(setup) { Requirements.of(setup, catalog) }
     val link = InviteLink.build(bot.applicationId, req.permissions)
