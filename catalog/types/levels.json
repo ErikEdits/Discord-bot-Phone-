@@ -1,0 +1,110 @@
+{
+  "id": "levels",
+  "version": 1,
+  "module": "levels",
+  "name": {
+    "de": "Level-Bot",
+    "en": "Level bot"
+  },
+  "description": {
+    "de": "XP für Aktivität, Level-Ups, Rangkarte und Bestenliste, Rollen als Belohnung.",
+    "en": "XP for activity, level-ups, rank card and leaderboard, roles as rewards."
+  },
+  "emoji": "⭐",
+  "category": "community",
+  "questions": [
+    {
+      "id": "xp_per_message",
+      "type": "number",
+      "label": {
+        "de": "Wie viele XP pro Nachricht (ungefähr)?",
+        "en": "How much XP per message (about)?"
+      },
+      "default": 15,
+      "min": 1,
+      "max": 100,
+      "group": {
+        "de": "XP",
+        "en": "XP"
+      }
+    },
+    {
+      "id": "cooldown_seconds",
+      "type": "number",
+      "label": {
+        "de": "Nur alle X Sekunden XP (gegen Spam)",
+        "en": "XP only every X seconds (against spam)"
+      },
+      "default": 60,
+      "min": 0,
+      "max": 3600,
+      "group": {
+        "de": "XP",
+        "en": "XP"
+      }
+    },
+    {
+      "id": "levelup_message",
+      "type": "long_text",
+      "label": {
+        "de": "Nachricht beim Level-Up",
+        "en": "Level-up message"
+      },
+      "help": {
+        "de": "Platzhalter: {user.mention}, {level}",
+        "en": "Placeholders: {user.mention}, {level}"
+      },
+      "default": "🎉 {user.mention} ist jetzt Level **{level}**!",
+      "group": {
+        "de": "Level-Up",
+        "en": "Level-up"
+      }
+    },
+    {
+      "id": "levelup_channel",
+      "type": "channel",
+      "label": {
+        "de": "Kanal für Level-Ups (leer = gleicher Kanal)",
+        "en": "Channel for level-ups (empty = same channel)"
+      },
+      "default": "",
+      "group": {
+        "de": "Level-Up",
+        "en": "Level-up"
+      }
+    },
+    {
+      "id": "rank_card",
+      "type": "bool",
+      "label": {
+        "de": "/rank als Bild (Rangkarte)?",
+        "en": "/rank as an image (rank card)?"
+      },
+      "default": true,
+      "group": {
+        "de": "Befehle",
+        "en": "Commands"
+      }
+    },
+    {
+      "id": "rewards",
+      "type": "text_list",
+      "label": {
+        "de": "Rollen-Belohnungen (Format „Level: Rollenname“)",
+        "en": "Role rewards (format \"level: role name\")"
+      },
+      "help": {
+        "de": "z.B. „5: Aktiv“, „20: Stammgast“. Rollen werden erstellt, wenn es sie nicht gibt.",
+        "en": "e.g. \"5: Active\", \"20: Regular\". Roles are created if missing."
+      },
+      "default": [
+        "5: Aktiv",
+        "20: Stammgast"
+      ],
+      "group": {
+        "de": "Belohnungen",
+        "en": "Rewards"
+      }
+    }
+  ]
+}

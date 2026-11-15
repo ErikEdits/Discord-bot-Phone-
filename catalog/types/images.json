@@ -1,0 +1,179 @@
+{
+  "id": "images",
+  "version": 1,
+  "module": "images",
+  "name": {
+    "de": "Bilder-Bot",
+    "en": "Image bot"
+  },
+  "description": {
+    "de": "Schickt Bilder: vom Handy, nach Zeitplan oder auf Befehl (Katzen, Hunde, Memes).",
+    "en": "Sends images: from your phone, on a schedule or on command (cats, dogs, memes)."
+  },
+  "emoji": "🖼️",
+  "category": "fun",
+  "questions": [
+    {
+      "id": "commands",
+      "type": "multi_choice",
+      "label": {
+        "de": "Welche Bild-Befehle soll es geben?",
+        "en": "Which image commands?"
+      },
+      "default": [
+        "cats",
+        "dogs",
+        "memes"
+      ],
+      "options": [
+        {
+          "value": "cats",
+          "label": {
+            "de": "/katze – zufällige Katze",
+            "en": "/cat – random cat"
+          }
+        },
+        {
+          "value": "dogs",
+          "label": {
+            "de": "/hund – zufälliger Hund",
+            "en": "/dog – random dog"
+          }
+        },
+        {
+          "value": "memes",
+          "label": {
+            "de": "/meme – zufälliges Meme",
+            "en": "/meme – random meme"
+          }
+        },
+        {
+          "value": "foxes",
+          "label": {
+            "de": "/fuchs – zufälliger Fuchs",
+            "en": "/fox – random fox"
+          }
+        }
+      ],
+      "group": {
+        "de": "Befehle",
+        "en": "Commands"
+      }
+    },
+    {
+      "id": "schedule_enabled",
+      "type": "bool",
+      "label": {
+        "de": "Automatisch Bilder nach Zeitplan posten?",
+        "en": "Post images on a schedule?"
+      },
+      "default": false,
+      "group": {
+        "de": "Zeitplan",
+        "en": "Schedule"
+      }
+    },
+    {
+      "id": "schedule_channel",
+      "type": "channel",
+      "label": {
+        "de": "In welchen Kanal?",
+        "en": "Which channel?"
+      },
+      "default": "bilder",
+      "show_if": {
+        "question": "schedule_enabled",
+        "equals": true
+      },
+      "group": {
+        "de": "Zeitplan",
+        "en": "Schedule"
+      }
+    },
+    {
+      "id": "schedule_time",
+      "type": "time",
+      "label": {
+        "de": "Um welche Uhrzeit (täglich)?",
+        "en": "At what time (daily)?"
+      },
+      "default": "18:00",
+      "show_if": {
+        "question": "schedule_enabled",
+        "equals": true
+      },
+      "group": {
+        "de": "Zeitplan",
+        "en": "Schedule"
+      }
+    },
+    {
+      "id": "schedule_source",
+      "type": "choice",
+      "label": {
+        "de": "Welche Bilder?",
+        "en": "Which images?"
+      },
+      "help": {
+        "de": "„Meine Sammlung“ = Bilder, die du in der App hinzufügst.",
+        "en": "\"My collection\" = images you add in the app."
+      },
+      "default": "collection",
+      "options": [
+        {
+          "value": "collection",
+          "label": {
+            "de": "Meine Sammlung (vom Handy)",
+            "en": "My collection (from phone)"
+          }
+        },
+        {
+          "value": "cats",
+          "label": {
+            "de": "Katzen",
+            "en": "Cats"
+          }
+        },
+        {
+          "value": "dogs",
+          "label": {
+            "de": "Hunde",
+            "en": "Dogs"
+          }
+        },
+        {
+          "value": "memes",
+          "label": {
+            "de": "Memes",
+            "en": "Memes"
+          }
+        }
+      ],
+      "show_if": {
+        "question": "schedule_enabled",
+        "equals": true
+      },
+      "group": {
+        "de": "Zeitplan",
+        "en": "Schedule"
+      }
+    },
+    {
+      "id": "schedule_text",
+      "type": "text",
+      "label": {
+        "de": "Text zum Bild (optional)",
+        "en": "Text with the image (optional)"
+      },
+      "default": "📸 Bild des Tages",
+      "show_if": {
+        "question": "schedule_enabled",
+        "equals": true
+      },
+      "group": {
+        "de": "Zeitplan",
+        "en": "Schedule"
+      }
+    }
+  ]
+}

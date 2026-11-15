@@ -1,0 +1,167 @@
+{
+  "id": "welcome",
+  "version": 1,
+  "module": "welcome",
+  "name": {
+    "de": "Willkommens-Bot",
+    "en": "Welcome bot"
+  },
+  "description": {
+    "de": "Begrüßt neue Mitglieder mit Text und Bild, gibt Rollen und verabschiedet.",
+    "en": "Greets new members with text and an image, gives roles and says goodbye."
+  },
+  "emoji": "👋",
+  "category": "community",
+  "questions": [
+    {
+      "id": "channel",
+      "type": "channel",
+      "label": {
+        "de": "In welchem Kanal begrüßen?",
+        "en": "Which channel for greetings?"
+      },
+      "default": "willkommen",
+      "group": {
+        "de": "Begrüßung",
+        "en": "Greeting"
+      }
+    },
+    {
+      "id": "message",
+      "type": "long_text",
+      "label": {
+        "de": "Begrüßungstext",
+        "en": "Greeting text"
+      },
+      "help": {
+        "de": "Platzhalter: {user.mention}, {user}, {server}, {members}",
+        "en": "Placeholders: {user.mention}, {user}, {server}, {members}"
+      },
+      "default": "👋 Willkommen auf **{server}**, {user.mention}! Du bist Mitglied Nr. {members}.",
+      "group": {
+        "de": "Begrüßung",
+        "en": "Greeting"
+      }
+    },
+    {
+      "id": "image",
+      "type": "bool",
+      "label": {
+        "de": "Begrüßungsbild mit Profilbild erzeugen?",
+        "en": "Generate a welcome image with avatar?"
+      },
+      "default": true,
+      "group": {
+        "de": "Bild",
+        "en": "Image"
+      }
+    },
+    {
+      "id": "image_title",
+      "type": "text",
+      "label": {
+        "de": "Überschrift auf dem Bild",
+        "en": "Title on the image"
+      },
+      "default": "Willkommen!",
+      "show_if": {
+        "question": "image",
+        "equals": true
+      },
+      "group": {
+        "de": "Bild",
+        "en": "Image"
+      }
+    },
+    {
+      "id": "color",
+      "type": "color",
+      "label": {
+        "de": "Farbe des Bildes",
+        "en": "Image color"
+      },
+      "default": "#5865F2",
+      "show_if": {
+        "question": "image",
+        "equals": true
+      },
+      "group": {
+        "de": "Bild",
+        "en": "Image"
+      }
+    },
+    {
+      "id": "auto_role",
+      "type": "role",
+      "label": {
+        "de": "Rolle für neue Mitglieder (leer = keine)",
+        "en": "Role for new members (empty = none)"
+      },
+      "default": "",
+      "group": {
+        "de": "Extras",
+        "en": "Extras"
+      }
+    },
+    {
+      "id": "dm_enabled",
+      "type": "bool",
+      "label": {
+        "de": "Zusätzlich eine private Nachricht schicken?",
+        "en": "Also send a direct message?"
+      },
+      "default": false,
+      "group": {
+        "de": "Extras",
+        "en": "Extras"
+      }
+    },
+    {
+      "id": "dm_text",
+      "type": "long_text",
+      "label": {
+        "de": "Text der privaten Nachricht",
+        "en": "Direct message text"
+      },
+      "default": "Hey {user}, schön dass du auf {server} bist! Lies dir bitte die Regeln durch. 🙂",
+      "show_if": {
+        "question": "dm_enabled",
+        "equals": true
+      },
+      "group": {
+        "de": "Extras",
+        "en": "Extras"
+      }
+    },
+    {
+      "id": "leave_enabled",
+      "type": "bool",
+      "label": {
+        "de": "Abschied melden, wenn jemand geht?",
+        "en": "Post a goodbye when someone leaves?"
+      },
+      "default": false,
+      "group": {
+        "de": "Abschied",
+        "en": "Goodbye"
+      }
+    },
+    {
+      "id": "leave_text",
+      "type": "text",
+      "label": {
+        "de": "Abschiedstext",
+        "en": "Goodbye text"
+      },
+      "default": "😢 {user} hat den Server verlassen.",
+      "show_if": {
+        "question": "leave_enabled",
+        "equals": true
+      },
+      "group": {
+        "de": "Abschied",
+        "en": "Goodbye"
+      }
+    }
+  ]
+}

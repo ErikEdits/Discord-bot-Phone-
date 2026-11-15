@@ -1,0 +1,94 @@
+{
+  "id": "roles",
+  "version": 1,
+  "module": "roles",
+  "name": {
+    "de": "Rollen & Verifizierung",
+    "en": "Roles & verification"
+  },
+  "description": {
+    "de": "Rollen per Knopf auswählen oder Verifizierung vor dem Schreiben.",
+    "en": "Pick roles with buttons or verify before chatting."
+  },
+  "emoji": "🎭",
+  "category": "community",
+  "questions": [
+    {
+      "id": "mode",
+      "type": "choice",
+      "label": {
+        "de": "Was soll der Bot machen?",
+        "en": "What should the bot do?"
+      },
+      "default": "buttons",
+      "options": [
+        {
+          "value": "buttons",
+          "label": {
+            "de": "Rollen per Knopf zum Auswählen",
+            "en": "Self-roles with buttons"
+          }
+        },
+        {
+          "value": "verify",
+          "label": {
+            "de": "Verifizierung (Knopf → Rolle)",
+            "en": "Verification (button → role)"
+          }
+        }
+      ]
+    },
+    {
+      "id": "panel_channel",
+      "type": "channel",
+      "label": {
+        "de": "In welchem Kanal steht das Panel?",
+        "en": "Which channel shows the panel?"
+      },
+      "default": "rollen"
+    },
+    {
+      "id": "panel_text",
+      "type": "long_text",
+      "label": {
+        "de": "Text im Panel",
+        "en": "Panel text"
+      },
+      "default": "Wähle deine Rollen mit den Knöpfen aus! 👇"
+    },
+    {
+      "id": "roles",
+      "type": "text_list",
+      "label": {
+        "de": "Welche Rollen zum Auswählen?",
+        "en": "Which roles to pick?"
+      },
+      "help": {
+        "de": "Werden erstellt, wenn es sie nicht gibt.",
+        "en": "Created if missing."
+      },
+      "default": [
+        "Gamer",
+        "Künstler",
+        "Musik"
+      ],
+      "show_if": {
+        "question": "mode",
+        "equals": "buttons"
+      }
+    },
+    {
+      "id": "verify_role",
+      "type": "role",
+      "label": {
+        "de": "Welche Rolle gibt es nach der Verifizierung?",
+        "en": "Which role after verification?"
+      },
+      "default": "Verifiziert",
+      "show_if": {
+        "question": "mode",
+        "equals": "verify"
+      }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "id": "polls",
+  "version": 1,
+  "module": "polls",
+  "name": {
+    "de": "Umfrage-Bot",
+    "en": "Poll bot"
+  },
+  "description": {
+    "de": "Umfragen mit Knöpfen und Live-Ergebnis.",
+    "en": "Polls with buttons and live results."
+  },
+  "emoji": "📊",
+  "category": "community",
+  "questions": [
+    {
+      "id": "who",
+      "type": "choice",
+      "label": {
+        "de": "Wer darf Umfragen erstellen?",
+        "en": "Who may create polls?"
+      },
+      "default": "everyone",
+      "options": [
+        {
+          "value": "everyone",
+          "label": {
+            "de": "Alle",
+            "en": "Everyone"
+          }
+        },
+        {
+          "value": "admins",
+          "label": {
+            "de": "Nur Admins",
+            "en": "Admins only"
+          }
+        }
+      ]
+    },
+    {
+      "id": "allow_change",
+      "type": "bool",
+      "label": {
+        "de": "Darf man seine Stimme ändern?",
+        "en": "Can people change their vote?"
+      },
+      "default": true
+    }
+  ]
+}

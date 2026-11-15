@@ -1,0 +1,168 @@
+{
+  "id": "moderation",
+  "version": 1,
+  "module": "moderation",
+  "name": {
+    "de": "Moderations-Bot",
+    "en": "Moderation bot"
+  },
+  "description": {
+    "de": "Kick, Ban, Timeout, Verwarnungen, Nachrichten löschen und ein Automod-Filter.",
+    "en": "Kick, ban, timeout, warnings, clearing messages and an automod filter."
+  },
+  "emoji": "🛡️",
+  "category": "moderation",
+  "questions": [
+    {
+      "id": "commands",
+      "type": "multi_choice",
+      "label": {
+        "de": "Welche Befehle für Moderatoren?",
+        "en": "Which commands for moderators?"
+      },
+      "default": [
+        "kick",
+        "ban",
+        "timeout",
+        "warn",
+        "clear"
+      ],
+      "options": [
+        {
+          "value": "kick",
+          "label": {
+            "de": "/kick",
+            "en": "/kick"
+          }
+        },
+        {
+          "value": "ban",
+          "label": {
+            "de": "/ban",
+            "en": "/ban"
+          }
+        },
+        {
+          "value": "timeout",
+          "label": {
+            "de": "/timeout",
+            "en": "/timeout"
+          }
+        },
+        {
+          "value": "warn",
+          "label": {
+            "de": "/warn + /verwarnungen",
+            "en": "/warn + /warnings"
+          }
+        },
+        {
+          "value": "clear",
+          "label": {
+            "de": "/clear (Nachrichten löschen)",
+            "en": "/clear (delete messages)"
+          }
+        }
+      ],
+      "group": {
+        "de": "Befehle",
+        "en": "Commands"
+      }
+    },
+    {
+      "id": "log_channel",
+      "type": "channel",
+      "label": {
+        "de": "Kanal für das Moderations-Protokoll",
+        "en": "Channel for the moderation log"
+      },
+      "default": "mod-log",
+      "group": {
+        "de": "Befehle",
+        "en": "Commands"
+      }
+    },
+    {
+      "id": "auto_timeout_warns",
+      "type": "number",
+      "label": {
+        "de": "Nach wie vielen Verwarnungen automatisch 1 Stunde Timeout? (0 = nie)",
+        "en": "Automatic 1 hour timeout after how many warnings? (0 = never)"
+      },
+      "default": 3,
+      "min": 0,
+      "max": 10,
+      "group": {
+        "de": "Befehle",
+        "en": "Commands"
+      }
+    },
+    {
+      "id": "block_invites",
+      "type": "bool",
+      "label": {
+        "de": "Fremde Discord-Einladungen löschen?",
+        "en": "Delete other servers' invite links?"
+      },
+      "default": true,
+      "group": {
+        "de": "Automod",
+        "en": "Automod"
+      }
+    },
+    {
+      "id": "block_links",
+      "type": "bool",
+      "label": {
+        "de": "Alle Links löschen (außer vom Team)?",
+        "en": "Delete all links (except staff)?"
+      },
+      "default": false,
+      "group": {
+        "de": "Automod",
+        "en": "Automod"
+      }
+    },
+    {
+      "id": "bad_words",
+      "type": "text_list",
+      "label": {
+        "de": "Verbotene Wörter",
+        "en": "Forbidden words"
+      },
+      "default": [],
+      "group": {
+        "de": "Automod",
+        "en": "Automod"
+      }
+    },
+    {
+      "id": "caps_filter",
+      "type": "bool",
+      "label": {
+        "de": "Nachrichten mit fast nur GROSSBUCHSTABEN löschen?",
+        "en": "Delete messages that are almost all CAPS?"
+      },
+      "default": false,
+      "group": {
+        "de": "Automod",
+        "en": "Automod"
+      }
+    },
+    {
+      "id": "mention_limit",
+      "type": "number",
+      "label": {
+        "de": "Ab wie vielen Erwähnungen ist es Spam? (0 = aus)",
+        "en": "How many mentions count as spam? (0 = off)"
+      },
+      "default": 5,
+      "min": 0,
+      "max": 50,
+      "group": {
+        "de": "Automod",
+        "en": "Automod"
+      }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "giveaway",
+  "version": 1,
+  "module": "giveaway",
+  "name": {
+    "de": "Giveaway-Bot",
+    "en": "Giveaway bot"
+  },
+  "description": {
+    "de": "Gewinnspiele mit Mitmach-Knopf und automatischer Auslosung.",
+    "en": "Giveaways with a join button and automatic draw."
+  },
+  "emoji": "🎉",
+  "category": "community",
+  "questions": [
+    {
+      "id": "manager_role",
+      "type": "role",
+      "label": {
+        "de": "Wer darf Giveaways starten? (leer = Admins)",
+        "en": "Who may start giveaways? (empty = admins)"
+      },
+      "default": ""
+    },
+    {
+      "id": "button_label",
+      "type": "text",
+      "label": {
+        "de": "Text auf dem Mitmach-Knopf",
+        "en": "Join button text"
+      },
+      "default": "🎉 Mitmachen"
+    },
+    {
+      "id": "default_minutes",
+      "type": "number",
+      "label": {
+        "de": "Standard-Dauer in Minuten",
+        "en": "Default duration in minutes"
+      },
+      "default": 60,
+      "min": 1,
+      "max": 43200
+    },
+    {
+      "id": "ping_winners",
+      "type": "bool",
+      "label": {
+        "de": "Gewinner erwähnen?",
+        "en": "Mention winners?"
+      },
+      "default": true
+    }
+  ]
+}

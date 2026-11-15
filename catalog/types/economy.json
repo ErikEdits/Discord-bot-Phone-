@@ -1,0 +1,114 @@
+{
+  "id": "economy",
+  "version": 1,
+  "module": "rules",
+  "name": {
+    "de": "Economy-Bot",
+    "en": "Economy bot"
+  },
+  "description": {
+    "de": "Eine Server-Währung: tägliche Belohnung, Kontostand und Arbeiten.",
+    "en": "A server currency: daily reward, balance and work."
+  },
+  "emoji": "💰",
+  "category": "fun",
+  "questions": [
+    {
+      "id": "currency",
+      "type": "text",
+      "label": {
+        "de": "Wie heißt eure Währung?",
+        "en": "What is your currency called?"
+      },
+      "default": "Münzen"
+    },
+    {
+      "id": "daily_amount",
+      "type": "number",
+      "label": {
+        "de": "Wie viel gibt es mit /daily (1× am Tag)?",
+        "en": "How much for /daily (once a day)?"
+      },
+      "default": 100,
+      "min": 1,
+      "max": 100000
+    },
+    {
+      "id": "work_enabled",
+      "type": "bool",
+      "label": {
+        "de": "/arbeiten (jede Stunde etwas verdienen)?",
+        "en": "/work (earn something every hour)?"
+      },
+      "default": true
+    }
+  ],
+  "rules": [
+    {
+      "rule": {
+        "name": "/daily",
+        "cooldown_seconds": 86400,
+        "trigger": {
+          "type": "slash",
+          "name": "daily",
+          "description": "Tägliche Belohnung abholen"
+        },
+        "actions": [
+          {
+            "type": "var_add",
+            "scope": "USER",
+            "name": "geld",
+            "amount": "{{answer.daily_amount}}"
+          },
+          {
+            "type": "reply",
+            "text": "💰 +{{answer.daily_amount}} {{answer.currency}}! Du hast jetzt {var.geld}.",
+            "private": false
+          }
+        ]
+      }
+    },
+    {
+      "rule": {
+        "name": "/konto",
+        "trigger": {
+          "type": "slash",
+          "name": "konto",
+          "description": "Zeigt deinen Kontostand"
+        },
+        "actions": [
+          {
+            "type": "reply",
+            "text": "💰 {user} hat **{var.geld} {{answer.currency}}**.",
+            "private": false
+          }
+        ]
+      }
+    },
+    {
+      "enabled_if": "work_enabled",
+      "rule": {
+        "name": "/arbeiten",
+        "cooldown_seconds": 3600,
+        "trigger": {
+          "type": "slash",
+          "name": "arbeiten",
+          "description": "Arbeite für etwas Geld"
+        },
+        "actions": [
+          {
+            "type": "var_add",
+            "scope": "USER",
+            "name": "geld",
+            "amount": "{random:10-60}"
+          },
+          {
+            "type": "reply",
+            "text": "🛠️ {user} hat {choice:Pizza ausgeliefert|Code geschrieben|Rasen gemäht|gestreamt} und hat jetzt {var.geld} {{answer.currency}}.",
+            "private": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "id": "fun",
+  "version": 1,
+  "module": "rules",
+  "name": {
+    "de": "Spaß & Minispiele",
+    "en": "Fun & mini games"
+  },
+  "description": {
+    "de": "Würfeln, Münzwurf, Magische 8-Kugel, Schere-Stein-Papier und mehr.",
+    "en": "Dice, coin flip, magic 8 ball, rock paper scissors and more."
+  },
+  "emoji": "🎲",
+  "category": "fun",
+  "questions": [
+    {
+      "id": "dice",
+      "type": "bool",
+      "label": {
+        "de": "/wuerfel – Würfeln",
+        "en": "/dice – roll a die"
+      },
+      "default": true
+    },
+    {
+      "id": "coin",
+      "type": "bool",
+      "label": {
+        "de": "/muenzwurf – Kopf oder Zahl",
+        "en": "/coinflip – heads or tails"
+      },
+      "default": true
+    },
+    {
+      "id": "eightball",
+      "type": "bool",
+      "label": {
+        "de": "/frage – Magische 8-Kugel",
+        "en": "/ask – magic 8 ball"
+      },
+      "default": true
+    },
+    {
+      "id": "rps",
+      "type": "bool",
+      "label": {
+        "de": "/ssp – Schere, Stein, Papier",
+        "en": "/rps – rock, paper, scissors"
+      },
+      "default": true
+    },
+    {
+      "id": "hug",
+      "type": "bool",
+      "label": {
+        "de": "/umarmen – jemanden umarmen",
+        "en": "/hug – hug someone"
+      },
+      "default": true
+    }
+  ],
+  "rules": [
+    {
+      "enabled_if": "dice",
+      "rule": {
+        "name": "/wuerfel",
+        "trigger": {
+          "type": "slash",
+          "name": "wuerfel",
+          "description": "Würfelt eine Zahl von 1 bis 6",
+          "options": []
+        },
+        "actions": [
+          {
+            "type": "reply",
+            "text": "🎲 {user} würfelt eine **{random:1-6}**!",
+            "private": false
+          }
+        ]
+      }
+    },
+    {
+      "enabled_if": "coin",
+      "rule": {
+        "name": "/muenzwurf",
+        "trigger": {
+          "type": "slash",
+          "name": "muenzwurf",
+          "description": "Kopf oder Zahl?",
+          "options": []
+        },
+        "actions": [
+          {
+            "type": "reply",
+            "text": "🪙 **{choice:Kopf|Zahl}**!",
+            "private": false
+          }
+        ]
+      }
+    },
+    {
+      "enabled_if": "eightball",
+      "rule": {
+        "name": "/frage",
+        "trigger": {
+          "type": "slash",
+          "name": "frage",
+          "description": "Stell der Kugel eine Frage",
+          "options": [
+            {
+              "name": "frage",
+              "description": "Deine Frage",
+              "type": "TEXT",
+              "required": true
+            }
+          ]
+        },
+        "actions": [
+          {
+            "type": "reply",
+            "text": "🎱 *{arg.frage}*\n**{choice:Ja!|Nein.|Vielleicht…|Auf jeden Fall!|Frag später nochmal.|Eher nicht.}**",
+            "private": false
+          }
+        ]
+      }
+    },
+    {
+      "enabled_if": "rps",
+      "rule": {
+        "name": "/ssp",
+        "trigger": {
+          "type": "slash",
+          "name": "ssp",
+          "description": "Schere, Stein, Papier gegen den Bot",
+          "options": [
+            {
+              "name": "wahl",
+              "description": "Schere, Stein oder Papier",
+              "type": "TEXT",
+              "required": true
+            }
+          ]
+        },
+        "actions": [
+          {
+            "type": "reply",
+            "text": "{user}: {arg.wahl} · Bot: **{choice:Schere ✂️|Stein 🪨|Papier 📄}**",
+            "private": false
+          }
+        ]
+      }
+    },
+    {
+      "enabled_if": "hug",
+      "rule": {
+        "name": "/umarmen",
+        "trigger": {
+          "type": "slash",
+          "name": "umarmen",
+          "description": "Umarme jemanden",
+          "options": [
+            {
+              "name": "person",
+              "description": "Wen?",
+              "type": "USER",
+              "required": true
+            }
+          ]
+        },
+        "actions": [
+          {
+            "type": "reply",
+            "text": "🤗 {user} umarmt {arg.person}!",
+            "private": false
+          }
+        ]
+      }
+    }
+  ]
+}

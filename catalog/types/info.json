@@ -1,0 +1,117 @@
+{
+  "id": "info",
+  "version": 1,
+  "module": "rules",
+  "name": {
+    "de": "Info-Bot",
+    "en": "Info bot"
+  },
+  "description": {
+    "de": "Befehle mit Infos zu deinem Server: Regeln, Links, Team.",
+    "en": "Commands with info about your server: rules, links, team."
+  },
+  "emoji": "ℹ️",
+  "category": "utility",
+  "questions": [
+    {
+      "id": "rules_text",
+      "type": "long_text",
+      "label": {
+        "de": "Text für /regeln",
+        "en": "Text for /rules"
+      },
+      "default": "1. Sei respektvoll\n2. Kein Spam\n3. Hab Spaß"
+    },
+    {
+      "id": "links_text",
+      "type": "long_text",
+      "label": {
+        "de": "Text für /links (Socials, Webseite …)",
+        "en": "Text for /links (socials, website …)"
+      },
+      "default": "🌐 Webseite: …\n📺 YouTube: …"
+    },
+    {
+      "id": "team_text",
+      "type": "long_text",
+      "label": {
+        "de": "Text für /team",
+        "en": "Text for /team"
+      },
+      "default": "👑 Admin: …\n🛡️ Moderatoren: …"
+    }
+  ],
+  "rules": [
+    {
+      "rule": {
+        "name": "/regeln",
+        "trigger": {
+          "type": "slash",
+          "name": "regeln",
+          "description": "Zeigt die Serverregeln"
+        },
+        "actions": [
+          {
+            "type": "embed",
+            "title": "📜 Regeln von {server}",
+            "description": "{{answer.rules_text}}",
+            "color": "#5865F2"
+          }
+        ]
+      }
+    },
+    {
+      "rule": {
+        "name": "/links",
+        "trigger": {
+          "type": "slash",
+          "name": "links",
+          "description": "Zeigt wichtige Links"
+        },
+        "actions": [
+          {
+            "type": "embed",
+            "title": "🔗 Links",
+            "description": "{{answer.links_text}}",
+            "color": "#23A55A"
+          }
+        ]
+      }
+    },
+    {
+      "rule": {
+        "name": "/team",
+        "trigger": {
+          "type": "slash",
+          "name": "team",
+          "description": "Zeigt das Team"
+        },
+        "actions": [
+          {
+            "type": "embed",
+            "title": "👥 Team",
+            "description": "{{answer.team_text}}",
+            "color": "#F0B232"
+          }
+        ]
+      }
+    },
+    {
+      "rule": {
+        "name": "/serverinfo",
+        "trigger": {
+          "type": "slash",
+          "name": "serverinfo",
+          "description": "Infos zum Server"
+        },
+        "actions": [
+          {
+            "type": "reply",
+            "text": "🏠 **{server}** · {members} Mitglieder",
+            "private": false
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "id": "reminders",
+  "version": 1,
+  "module": "reminders",
+  "name": {
+    "de": "Ankündigungs-Bot",
+    "en": "Announcement bot"
+  },
+  "description": {
+    "de": "Postet Nachrichten automatisch zu festen Zeiten.",
+    "en": "Posts messages automatically at fixed times."
+  },
+  "emoji": "⏰",
+  "category": "utility",
+  "questions": [
+    {
+      "id": "channel",
+      "type": "channel",
+      "label": {
+        "de": "In welchen Kanal?",
+        "en": "Which channel?"
+      },
+      "default": "ankuendigungen"
+    },
+    {
+      "id": "messages",
+      "type": "text_list",
+      "label": {
+        "de": "Nachrichten (Format „HH:MM Text“, eine pro Zeile)",
+        "en": "Messages (format \"HH:MM text\", one per line)"
+      },
+      "default": [
+        "09:00 Guten Morgen zusammen! ☀️"
+      ]
+    },
+    {
+      "id": "days",
+      "type": "multi_choice",
+      "label": {
+        "de": "An welchen Tagen?",
+        "en": "On which days?"
+      },
+      "default": [
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat",
+        "sun"
+      ],
+      "options": [
+        {
+          "value": "mon",
+          "label": {
+            "de": "Mo",
+            "en": "Mon"
+          }
+        },
+        {
+          "value": "tue",
+          "label": {
+            "de": "Di",
+            "en": "Tue"
+          }
+        },
+        {
+          "value": "wed",
+          "label": {
+            "de": "Mi",
+            "en": "Wed"
+          }
+        },
+        {
+          "value": "thu",
+          "label": {
+            "de": "Do",
+            "en": "Thu"
+          }
+        },
+        {
+          "value": "fri",
+          "label": {
+            "de": "Fr",
+            "en": "Fri"
+          }
+        },
+        {
+          "value": "sat",
+          "label": {
+            "de": "Sa",
+            "en": "Sat"
+          }
+        },
+        {
+          "value": "sun",
+          "label": {
+            "de": "So",
+            "en": "Sun"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mention",
+      "type": "choice",
+      "label": {
+        "de": "Wer soll erwähnt werden?",
+        "en": "Who should be mentioned?"
+      },
+      "default": "none",
+      "options": [
+        {
+          "value": "none",
+          "label": {
+            "de": "Niemand",
+            "en": "Nobody"
+          }
+        },
+        {
+          "value": "here",
+          "label": {
+            "de": "@here",
+            "en": "@here"
+          }
+        },
+        {
+          "value": "everyone",
+          "label": {
+            "de": "@everyone",
+            "en": "@everyone"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "id": "custom_commands",
+  "version": 1,
+  "module": "rules",
+  "name": {
+    "de": "Eigene Befehle",
+    "en": "Custom commands"
+  },
+  "description": {
+    "de": "Eigene Slash-Befehle mit festen Antworten, z.B. /discord, /zeiten, /ip.",
+    "en": "Your own slash commands with fixed answers, e.g. /discord, /times, /ip."
+  },
+  "emoji": "💬",
+  "category": "utility",
+  "questions": [
+    {
+      "id": "custom_commands",
+      "type": "text_list",
+      "label": {
+        "de": "Deine Befehle (Format „befehl = Antwort“)",
+        "en": "Your commands (format \"command = answer\")"
+      },
+      "help": {
+        "de": "z.B. „ip = Unsere Server-IP ist play.example.de“",
+        "en": "e.g. \"ip = Our server IP is play.example.com\""
+      },
+      "default": [
+        "regeln = Bitte lies die Regeln im Regeln-Kanal 📜"
+      ]
+    },
+    {
+      "id": "private_answers",
+      "type": "bool",
+      "label": {
+        "de": "Antworten nur für den Fragenden sichtbar?",
+        "en": "Answers only visible to the asker?"
+      },
+      "default": false
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "min_format": 1,
+  "types": [
+    {
+      "id": "tickets",
+      "version": 1,
+      "file": "types/tickets.json",
+      "name": {
+        "de": "Ticket-Bot",
+        "en": "Ticket bot"
+      },
+      "description": {
+        "de": "Support-Tickets mit Knopf: jeder bekommt einen privaten Kanal mit dem Team.",
+        "en": "Support tickets with a button: everyone gets a private channel with the team."
+      },
+      "emoji": "🎫",
+      "category": "support"
+    },
+    {
+      "id": "server_setup",
+      "version": 1,
+      "file": "types/server_setup.json",
+      "name": {
+        "de": "Server-Einrichtung",
+        "en": "Server setup"
+      },
+      "description": {
+        "de": "Richtet deinen Server automatisch ein: Kategorien, Kanäle, Rollen und Rechte.",
+        "en": "Sets up your server automatically: categories, channels, roles and permissions."
+      },
+      "emoji": "🏗️",
+      "category": "server"
+    },
+    {
+      "id": "images",
+      "version": 1,
+      "file": "types/images.json",
+      "name": {
+        "de": "Bilder-Bot",
+        "en": "Image bot"
+      },
+      "description": {
+        "de": "Schickt Bilder: vom Handy, nach Zeitplan oder auf Befehl (Katzen, Hunde, Memes).",
+        "en": "Sends images: from your phone, on a schedule or on command (cats, dogs, memes)."
+      },
+      "emoji": "🖼️",
+      "category": "fun"
+    },
+    {
+      "id": "moderation",
+      "version": 1,
+      "file": "types/moderation.json",
+      "name": {
+        "de": "Moderations-Bot",
+        "en": "Moderation bot"
+      },
+      "description": {
+        "de": "Kick, Ban, Timeout, Verwarnungen, Nachrichten löschen und ein Automod-Filter.",
+        "en": "Kick, ban, timeout, warnings, clearing messages and an automod filter."
+      },
+      "emoji": "🛡️",
+      "category": "moderation"
+    },
+    {
+      "id": "welcome",
+      "version": 1,
+      "file": "types/welcome.json",
+      "name": {
+        "de": "Willkommens-Bot",
+        "en": "Welcome bot"
+      },
+      "description": {
+        "de": "Begrüßt neue Mitglieder mit Text und Bild, gibt Rollen und verabschiedet.",
+        "en": "Greets new members with text and an image, gives roles and says goodbye."
+      },
+      "emoji": "👋",
+      "category": "community"
+    },
+    {
+      "id": "levels",
+      "version": 1,
+      "file": "types/levels.json",
+      "name": {
+        "de": "Level-Bot",
+        "en": "Level bot"
+      },
+      "description": {
+        "de": "XP für Aktivität, Level-Ups, Rangkarte und Bestenliste, Rollen als Belohnung.",
+        "en": "XP for activity, level-ups, rank card and leaderboard, roles as rewards."
+      },
+      "emoji": "⭐",
+      "category": "community"
+    },
+    {
+      "id": "giveaway",
+      "version": 1,
+      "file": "types/giveaway.json",
+      "name": {
+        "de": "Giveaway-Bot",
+        "en": "Giveaway bot"
+      },
+      "description": {
+        "de": "Gewinnspiele mit Mitmach-Knopf und automatischer Auslosung.",
+        "en": "Giveaways with a join button and automatic draw."
+      },
+      "emoji": "🎉",
+      "category": "community"
+    },
+    {
+      "id": "polls",
+      "version": 1,
+      "file": "types/polls.json",
+      "name": {
+        "de": "Umfrage-Bot",
+        "en": "Poll bot"
+      },
+      "description": {
+        "de": "Umfragen mit Knöpfen und Live-Ergebnis.",
+        "en": "Polls with buttons and live results."
+      },
+      "emoji": "📊",
+      "category": "community"
+    },
+    {
+      "id": "roles",
+      "version": 1,
+      "file": "types/roles.json",
+      "name": {
+        "de": "Rollen & Verifizierung",
+        "en": "Roles & verification"
+      },
+      "description": {
+        "de": "Rollen per Knopf auswählen oder Verifizierung vor dem Schreiben.",
+        "en": "Pick roles with buttons or verify before chatting."
+      },
+      "emoji": "🎭",
+      "category": "community"
+    },
+    {
+      "id": "reminders",
+      "version": 1,
+      "file": "types/reminders.json",
+      "name": {
+        "de": "Ankündigungs-Bot",
+        "en": "Announcement bot"
+      },
+      "description": {
+        "de": "Postet Nachrichten automatisch zu festen Zeiten.",
+        "en": "Posts messages automatically at fixed times."
+      },
+      "emoji": "⏰",
+      "category": "utility"
+    },
+    {
+      "id": "fun",
+      "version": 1,
+      "file": "types/fun.json",
+      "name": {
+        "de": "Spaß & Minispiele",
+        "en": "Fun & mini games"
+      },
+      "description": {
+        "de": "Würfeln, Münzwurf, Magische 8-Kugel, Schere-Stein-Papier und mehr.",
+        "en": "Dice, coin flip, magic 8 ball, rock paper scissors and more."
+      },
+      "emoji": "🎲",
+      "category": "fun"
+    },
+    {
+      "id": "custom_commands",
+      "version": 1,
+      "file": "types/custom_commands.json",
+      "name": {
+        "de": "Eigene Befehle",
+        "en": "Custom commands"
+      },
+      "description": {
+        "de": "Eigene Slash-Befehle mit festen Antworten, z.B. /discord, /zeiten, /ip.",
+        "en": "Your own slash commands with fixed answers, e.g. /discord, /times, /ip."
+      },
+      "emoji": "💬",
+      "category": "utility"
+    },
+    {
+      "id": "info",
+      "version": 1,
+      "file": "types/info.json",
+      "name": {
+        "de": "Info-Bot",
+        "en": "Info bot"
+      },
+      "description": {
+        "de": "Befehle mit Infos zu deinem Server: Regeln, Links, Team.",
+        "en": "Commands with info about your server: rules, links, team."
+      },
+      "emoji": "ℹ️",
+      "category": "utility"
+    },
+    {
+      "id": "economy",
+      "version": 1,
+      "file": "types/economy.json",
+      "name": {
+        "de": "Economy-Bot",
+        "en": "Economy bot"
+      },
+      "description": {
+        "de": "Eine Server-Währung: tägliche Belohnung, Kontostand und Arbeiten.",
+        "en": "A server currency: daily reward, balance and work."
+      },
+      "emoji": "💰",
+      "category": "fun"
+    }
+  ]
+}

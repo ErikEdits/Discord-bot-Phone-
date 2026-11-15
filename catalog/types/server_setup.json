@@ -1,0 +1,265 @@
+{
+  "id": "server_setup",
+  "version": 1,
+  "module": "server_setup",
+  "name": {
+    "de": "Server-Einrichtung",
+    "en": "Server setup"
+  },
+  "description": {
+    "de": "Richtet deinen Server automatisch ein: Kategorien, Kanäle, Rollen und Rechte.",
+    "en": "Sets up your server automatically: categories, channels, roles and permissions."
+  },
+  "emoji": "🏗️",
+  "category": "server",
+  "questions": [
+    {
+      "id": "preset",
+      "type": "choice",
+      "label": {
+        "de": "Was für ein Server soll es werden?",
+        "en": "What kind of server is it?"
+      },
+      "help": {
+        "de": "Daraus entsteht die Grundstruktur.",
+        "en": "This decides the basic structure."
+      },
+      "default": "community",
+      "options": [
+        {
+          "value": "gaming",
+          "label": {
+            "de": "Gaming",
+            "en": "Gaming"
+          }
+        },
+        {
+          "value": "community",
+          "label": {
+            "de": "Community / Freunde",
+            "en": "Community / friends"
+          }
+        },
+        {
+          "value": "streamer",
+          "label": {
+            "de": "Streamer / Creator",
+            "en": "Streamer / creator"
+          }
+        },
+        {
+          "value": "school",
+          "label": {
+            "de": "Schule / Lernen",
+            "en": "School / study"
+          }
+        },
+        {
+          "value": "business",
+          "label": {
+            "de": "Firma / Team",
+            "en": "Business / team"
+          }
+        },
+        {
+          "value": "roleplay",
+          "label": {
+            "de": "Roleplay",
+            "en": "Roleplay"
+          }
+        },
+        {
+          "value": "minimal",
+          "label": {
+            "de": "Minimal",
+            "en": "Minimal"
+          }
+        }
+      ],
+      "group": {
+        "de": "Art",
+        "en": "Kind"
+      }
+    },
+    {
+      "id": "channel_language",
+      "type": "choice",
+      "label": {
+        "de": "Sprache der Kanalnamen",
+        "en": "Language of channel names"
+      },
+      "default": "de",
+      "options": [
+        {
+          "value": "de",
+          "label": {
+            "de": "Deutsch",
+            "en": "German"
+          }
+        },
+        {
+          "value": "en",
+          "label": {
+            "de": "Englisch",
+            "en": "English"
+          }
+        }
+      ],
+      "group": {
+        "de": "Art",
+        "en": "Kind"
+      }
+    },
+    {
+      "id": "server_name",
+      "type": "text",
+      "label": {
+        "de": "Neuer Servername (leer = nicht ändern)",
+        "en": "New server name (empty = keep)"
+      },
+      "group": {
+        "de": "Art",
+        "en": "Kind"
+      }
+    },
+    {
+      "id": "roles",
+      "type": "text_list",
+      "label": {
+        "de": "Welche Rollen soll es geben? (oberste zuerst)",
+        "en": "Which roles? (highest first)"
+      },
+      "help": {
+        "de": "Die erste Rolle bekommt Admin-Rechte, die zweite Moderator-Rechte.",
+        "en": "The first role gets admin rights, the second moderator rights."
+      },
+      "default": [
+        "Admin",
+        "Moderator",
+        "Mitglied"
+      ],
+      "group": {
+        "de": "Rollen",
+        "en": "Roles"
+      }
+    },
+    {
+      "id": "member_role_on_join",
+      "type": "bool",
+      "label": {
+        "de": "Neue Mitglieder bekommen automatisch die letzte Rolle?",
+        "en": "New members get the last role automatically?"
+      },
+      "default": true,
+      "group": {
+        "de": "Rollen",
+        "en": "Roles"
+      }
+    },
+    {
+      "id": "include_voice",
+      "type": "bool",
+      "label": {
+        "de": "Sprachkanäle anlegen?",
+        "en": "Create voice channels?"
+      },
+      "default": true,
+      "group": {
+        "de": "Kanäle",
+        "en": "Channels"
+      }
+    },
+    {
+      "id": "voice_count",
+      "type": "number",
+      "label": {
+        "de": "Wie viele Sprachkanäle?",
+        "en": "How many voice channels?"
+      },
+      "default": 3,
+      "min": 1,
+      "max": 10,
+      "show_if": {
+        "question": "include_voice",
+        "equals": true
+      },
+      "group": {
+        "de": "Kanäle",
+        "en": "Channels"
+      }
+    },
+    {
+      "id": "extra_channels",
+      "type": "text_list",
+      "label": {
+        "de": "Zusätzliche Textkanäle",
+        "en": "Extra text channels"
+      },
+      "help": {
+        "de": "z.B. memes, clips, hausaufgaben",
+        "en": "e.g. memes, clips, homework"
+      },
+      "default": [],
+      "group": {
+        "de": "Kanäle",
+        "en": "Channels"
+      }
+    },
+    {
+      "id": "announcements_readonly",
+      "type": "bool",
+      "label": {
+        "de": "Ankündigungen nur für das Team schreibbar?",
+        "en": "Announcements writable by staff only?"
+      },
+      "default": true,
+      "group": {
+        "de": "Kanäle",
+        "en": "Channels"
+      }
+    },
+    {
+      "id": "rules_text",
+      "type": "long_text",
+      "label": {
+        "de": "Text für den Regeln-Kanal",
+        "en": "Text for the rules channel"
+      },
+      "default": "1. Sei respektvoll\n2. Kein Spam oder Werbung\n3. Halte dich an die Discord-Richtlinien",
+      "group": {
+        "de": "Texte",
+        "en": "Texts"
+      }
+    },
+    {
+      "id": "welcome_text",
+      "type": "long_text",
+      "label": {
+        "de": "Text für den Willkommens-Kanal",
+        "en": "Text for the welcome channel"
+      },
+      "default": "Willkommen auf unserem Server! 🎉 Lies dir bitte die Regeln durch.",
+      "group": {
+        "de": "Texte",
+        "en": "Texts"
+      }
+    },
+    {
+      "id": "delete_existing",
+      "type": "bool",
+      "label": {
+        "de": "Bestehende Kanäle vorher LÖSCHEN?",
+        "en": "DELETE existing channels first?"
+      },
+      "help": {
+        "de": "Vorsicht: Nur für neue, leere Server. Kann nicht rückgängig gemacht werden.",
+        "en": "Careful: only for new, empty servers. Cannot be undone."
+      },
+      "default": false,
+      "group": {
+        "de": "Achtung",
+        "en": "Careful"
+      }
+    }
+  ]
+}

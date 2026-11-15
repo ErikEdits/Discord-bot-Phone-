@@ -1,0 +1,199 @@
+{
+  "id": "tickets",
+  "version": 1,
+  "module": "tickets",
+  "name": {
+    "de": "Ticket-Bot",
+    "en": "Ticket bot"
+  },
+  "description": {
+    "de": "Support-Tickets mit Knopf: jeder bekommt einen privaten Kanal mit dem Team.",
+    "en": "Support tickets with a button: everyone gets a private channel with the team."
+  },
+  "emoji": "🎫",
+  "category": "support",
+  "questions": [
+    {
+      "id": "categories",
+      "type": "text_list",
+      "label": {
+        "de": "Welche Ticket-Arten soll es geben?",
+        "en": "Which ticket types should exist?"
+      },
+      "help": {
+        "de": "Ein Knopf pro Art, z.B. Support, Bewerbung, Melden.",
+        "en": "One button per type, e.g. Support, Application, Report."
+      },
+      "default": [
+        "Support",
+        "Frage",
+        "Bewerbung"
+      ],
+      "group": {
+        "de": "Ticket-Arten",
+        "en": "Ticket types"
+      }
+    },
+    {
+      "id": "panel_channel",
+      "type": "channel",
+      "label": {
+        "de": "In welchem Kanal steht das Ticket-Panel?",
+        "en": "Which channel shows the ticket panel?"
+      },
+      "help": {
+        "de": "Wird erstellt, wenn es ihn noch nicht gibt.",
+        "en": "Created if it doesn't exist."
+      },
+      "default": "tickets",
+      "group": {
+        "de": "Panel",
+        "en": "Panel"
+      }
+    },
+    {
+      "id": "panel_title",
+      "type": "text",
+      "label": {
+        "de": "Überschrift des Panels",
+        "en": "Panel title"
+      },
+      "default": "🎫 Support",
+      "group": {
+        "de": "Panel",
+        "en": "Panel"
+      }
+    },
+    {
+      "id": "panel_text",
+      "type": "long_text",
+      "label": {
+        "de": "Text im Panel",
+        "en": "Panel text"
+      },
+      "default": "Klick auf einen Knopf, um ein Ticket zu öffnen. Das Team meldet sich bei dir.",
+      "group": {
+        "de": "Panel",
+        "en": "Panel"
+      }
+    },
+    {
+      "id": "staff_role",
+      "type": "role",
+      "label": {
+        "de": "Welche Rolle ist das Support-Team?",
+        "en": "Which role is the support team?"
+      },
+      "help": {
+        "de": "Diese Rolle sieht alle Tickets. Wird erstellt, wenn es sie nicht gibt.",
+        "en": "This role sees all tickets. Created if missing."
+      },
+      "default": "Support-Team",
+      "group": {
+        "de": "Team",
+        "en": "Team"
+      }
+    },
+    {
+      "id": "ping_staff",
+      "type": "bool",
+      "label": {
+        "de": "Team bei neuem Ticket erwähnen?",
+        "en": "Mention the team on new tickets?"
+      },
+      "default": true,
+      "group": {
+        "de": "Team",
+        "en": "Team"
+      }
+    },
+    {
+      "id": "allow_claim",
+      "type": "bool",
+      "label": {
+        "de": "„Übernehmen“-Knopf für das Team?",
+        "en": "\"Claim\" button for the team?"
+      },
+      "default": true,
+      "group": {
+        "de": "Team",
+        "en": "Team"
+      }
+    },
+    {
+      "id": "ticket_category",
+      "type": "text",
+      "label": {
+        "de": "Name der Discord-Kategorie für Tickets",
+        "en": "Discord category name for tickets"
+      },
+      "default": "Tickets",
+      "group": {
+        "de": "Ticket-Kanäle",
+        "en": "Ticket channels"
+      }
+    },
+    {
+      "id": "welcome_text",
+      "type": "long_text",
+      "label": {
+        "de": "Erste Nachricht im Ticket",
+        "en": "First message in the ticket"
+      },
+      "help": {
+        "de": "Platzhalter: {user}, {type}",
+        "en": "Placeholders: {user}, {type}"
+      },
+      "default": "Hallo {user}! 👋 Beschreib bitte dein Anliegen ({type}). Das Team meldet sich gleich.",
+      "group": {
+        "de": "Ticket-Kanäle",
+        "en": "Ticket channels"
+      }
+    },
+    {
+      "id": "max_open",
+      "type": "number",
+      "label": {
+        "de": "Wie viele offene Tickets darf ein Nutzer gleichzeitig haben?",
+        "en": "How many open tickets per user?"
+      },
+      "default": 1,
+      "min": 1,
+      "max": 10,
+      "group": {
+        "de": "Ticket-Kanäle",
+        "en": "Ticket channels"
+      }
+    },
+    {
+      "id": "transcripts",
+      "type": "bool",
+      "label": {
+        "de": "Beim Schließen ein Protokoll (Transkript) speichern?",
+        "en": "Save a transcript when closing?"
+      },
+      "default": true,
+      "group": {
+        "de": "Protokoll",
+        "en": "Transcript"
+      }
+    },
+    {
+      "id": "log_channel",
+      "type": "channel",
+      "label": {
+        "de": "In welchen Kanal kommen die Protokolle?",
+        "en": "Which channel gets the transcripts?"
+      },
+      "default": "ticket-logs",
+      "show_if": {
+        "question": "transcripts",
+        "equals": true
+      },
+      "group": {
+        "de": "Protokoll",
+        "en": "Transcript"
+      }
+    }
+  ]
+}
