@@ -4,6 +4,7 @@ import android.content.Context
 import de.erikedits.pocketbot.BuildConfig
 import de.erikedits.pocketbot.service.BotManager
 import de.erikedits.pocketbot.shared.api.PocketBotApi
+import de.erikedits.pocketbot.shared.catalog.CatalogClient
 import de.erikedits.pocketbot.shared.discord.DiscordRest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,8 +27,9 @@ class AppContainer(context: Context) {
     val discord = DiscordRest(http)
     val auth = AuthRepository(api, secure, prefs)
     val bots = BotRepository(context, secure)
-    val configs = ConfigRepository(context)
-    val botManager = BotManager(bots, configs, appScope, dataDir = context.filesDir)
+    val setups = SetupRepository(context)
+    val catalog = CatalogRepository(context, CatalogClient(http))
+    val botManager = BotManager(bots, setups, catalog, appScope, context.filesDir, http, AndroidImageRenderer())
     val vault = VaultRepository(api, secure, bots)
     val crashLog = CrashLog(context)
 

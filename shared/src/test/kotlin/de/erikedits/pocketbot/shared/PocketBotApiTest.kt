@@ -85,6 +85,35 @@ class PocketBotApiTest {
     }
 
     @Test
+    fun `ai job is started, polled and tokens are stripped`() = runTest {
+        session = "tok"
+        server.enqueue(MockResponse().setResponseCode(202).setBody("""{"job_id":"ai_1","remaining_today":9}"""))
+        server.enqueue(MockResponse().setBody("""{"status":"pending"}"""))
+        server.enqueue(MockResponse().setBody("""{"status":"done","result":{"types":["tickets"],"answers":{"tickets":{"max_open":2}},"summary":"ok"}}"""))
+        val fakeToken = listOf("A".repeat(24), "B".repeat(6), "c".repeat(30)).joinToString(".")
+        val result = api().aiRun(de.erikedits.pocketbot.shared.api.AiRequest("setup", "Ticket-Bot bitte $fakeToken", "de"), pollMs = 1)
+        assertEquals(listOf("tickets"), result.types)
+        assertEquals("2", result.answers["tickets"]!!["max_open"].toString())
+        val body = server.takeRequest().body.readUtf8()
+        assertTrue(body.contains("[token]"))
+        assertTrue(!body.contains(fakeToken))
+        assertEquals("/v1/ai/jobs/ai_1", server.takeRequest().path)
+    }
+
+    @Test
+    fun `ai failure becomes an ApiException`() = runTest {
+        session = "tok"
+        server.enqueue(MockResponse().setResponseCode(202).setBody("""{"job_id":"ai_2"}"""))
+        server.enqueue(MockResponse().setBody("""{"status":"failed","error":"ai_unavailable"}"""))
+        try {
+            api().aiRun(de.erikedits.pocketbot.shared.api.AiRequest("setup", "x", "de"), pollMs = 1)
+            fail("expected ApiException")
+        } catch (e: ApiException) {
+            assertEquals("ai_unavailable", e.code)
+        }
+    }
+
+    @Test
     fun `config falls back to defaults for missing fields`() = runTest {
         server.enqueue(MockResponse().setBody("""{"min_app_version":2,"unknown":1}"""))
         val cfg = api().config()

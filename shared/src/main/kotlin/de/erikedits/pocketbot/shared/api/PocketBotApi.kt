@@ -11,6 +11,10 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 
+/** Removes things that look like Discord tokens before text leaves the phone. */
+fun stripSecrets(text: String): String =
+    text.replace(Regex("[A-Za-z0-9_-]{20,}\\.[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]{20,}"), "[token]")
+
 /** Thrown for every non-2xx answer of the App-API. [code] is the `error` field of the contract. */
 class ApiException(val status: Int, val code: String, override val message: String) : Exception(message) {
     val isUnauthorized: Boolean get() = status == 401
@@ -47,6 +51,26 @@ class PocketBotApi(
     suspend fun putVault(botId: String, body: VaultPut): OkResponse =
         send("PUT", "v1/vault/$botId", json.encodeToString(VaultPut.serializer(), body))
     suspend fun deleteVault(botId: String): OkResponse = send("DELETE", "v1/vault/$botId", null)
+
+    suspend fun aiInterpret(body: AiRequest): AiJobStarted =
+        send("POST", "v1/ai/interpret", json.encodeToString(AiRequest.serializer(), body.copy(text = stripSecrets(body.text))))
+
+    suspend fun aiJob(jobId: String): AiJob = get("v1/ai/jobs/$jobId")
+
+    /** Starts an AI job and waits for the result (polls every 2 s, up to [timeoutMs]). */
+    suspend fun aiRun(body: AiRequest, timeoutMs: Long = 90_000, pollMs: Long = 2_000): AiResult {
+        val job = aiInterpret(body)
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            kotlinx.coroutines.delay(pollMs)
+            val state = aiJob(job.jobId)
+            when (state.status) {
+                "done" -> return state.result ?: throw ApiException(200, "ai_bad_output", "empty result")
+                "failed" -> throw ApiException(200, state.error ?: "ai_unavailable", state.error ?: "AI failed")
+            }
+        }
+        throw ApiException(0, "ai_timeout", "AI took too long")
+    }
 
     private suspend inline fun <reified T> get(path: String, auth: Boolean = true): T = send("GET", path, null, auth)
 

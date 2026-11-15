@@ -85,6 +85,9 @@ android {
         }
     }
 
+    // The bot-type catalog (/catalog) is bundled as offline fallback; the app updates it from GitHub.
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/catalogAssets"))
+
     lint {
         // Missing translations must fail the build: every string exists in EN and DE.
         error += "MissingTranslation"
@@ -96,6 +99,12 @@ android {
 kotlin {
     compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
 }
+
+val copyCatalog = tasks.register<Copy>("copyCatalogAssets") {
+    from(rootProject.file("catalog")) { include("index.json", "types/*.json") }
+    into(layout.buildDirectory.dir("generated/catalogAssets/catalog"))
+}
+tasks.named("preBuild") { dependsOn(copyCatalog) }
 
 dependencies {
     implementation(project(":engine"))

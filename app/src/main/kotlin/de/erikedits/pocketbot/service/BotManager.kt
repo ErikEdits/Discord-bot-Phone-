@@ -1,8 +1,13 @@
 package de.erikedits.pocketbot.service
 
 import de.erikedits.pocketbot.data.BotRepository
-import de.erikedits.pocketbot.data.ConfigRepository
-import de.erikedits.pocketbot.shared.config.BotConfig
+import de.erikedits.pocketbot.data.CatalogRepository
+import de.erikedits.pocketbot.data.SetupRepository
+import de.erikedits.pocketbot.engine.modules.ImageRenderer
+import de.erikedits.pocketbot.engine.modules.ModuleFactory
+import de.erikedits.pocketbot.shared.catalog.BotSetup
+import de.erikedits.pocketbot.shared.catalog.RulesCompiler
+import okhttp3.OkHttpClient
 import de.erikedits.pocketbot.engine.BotEngine
 import de.erikedits.pocketbot.engine.BotStatus
 import de.erikedits.pocketbot.engine.EngineEvent
@@ -29,13 +34,13 @@ data class BotEvent(val botId: String, val event: EngineEvent)
 /** Owns one engine per bot. The foreground service keeps the process alive while any is active. */
 class BotManager(
     private val repo: BotRepository,
-    private val configs: ConfigRepository,
+    private val setups: SetupRepository,
+    private val catalogs: CatalogRepository,
     private val scope: CoroutineScope,
-    /** Folder for per-bot log and variable files (null = memory only). */
-    private val dataDir: File? = null,
-    private val engineFactory: (id: String, token: String, config: BotConfig, dir: File?) -> BotEngine = { id, token, config, dir ->
-        JdaBotEngine(token, config, logFile = dir?.let { File(it, "logs/$id.log") }, varsFile = dir?.let { File(it, "vars/$id.json") })
-    },
+    /** Folder for per-bot logs, variables and images. */
+    private val dataDir: File,
+    private val http: OkHttpClient,
+    private val renderer: ImageRenderer,
 ) {
     private class Entry(val engine: BotEngine, val token: String, val jobs: List<Job>)
 
@@ -54,19 +59,25 @@ class BotManager(
     fun engine(id: String): BotEngine? = entries[id]?.engine
 
     /** Log of the last run from disk, e.g. after the app crashed. */
-    fun savedLog(id: String): List<LogEntry> = dataDir?.let { LogFile.read(File(it, "logs/$id.log")) } ?: emptyList()
+    fun savedLog(id: String): List<LogEntry> = LogFile.read(File(dataDir, "logs/$id.log"))
 
-    /** Saves edited functions and applies them to the running bot right away. */
-    fun saveConfig(id: String, config: BotConfig) {
-        configs.save(id, config)
-        entries[id]?.engine?.updateConfig(config)
+    /** Saves bot types + answers and applies them to the running bot right away. */
+    fun saveSetup(id: String, setup: BotSetup) {
+        setups.save(id, setup)
+        val catalog = catalogs.catalog.value
+        entries[id]?.engine?.updateSetup(RulesCompiler.compileSetup(setup, catalog), ModuleFactory.create(setup, catalog, id))
     }
 
-    /** Removes the bot's rules, variables and log (bot deleted). */
+    /** Folder with the image collection of a bot (images module). */
+    fun imageDir(id: String): File = File(dataDir, "images/$id")
+
+    /** Removes the bot's setup, variables, log and images (bot deleted). */
     fun deleteData(id: String) {
         remove(id)
-        configs.delete(id)
-        dataDir?.let { File(it, "vars/$id.json").delete(); File(it, "logs/$id.log").delete() }
+        setups.delete(id)
+        File(dataDir, "vars/$id.json").delete()
+        File(dataDir, "logs/$id.log").delete()
+        imageDir(id).deleteRecursively()
     }
 
     /** Safe mode after a crash: don't auto-restart anything. */
@@ -116,7 +127,18 @@ class BotManager(
     fun activeCount(): Int = entries.values.count { it.engine.state.value.status.isActive }
 
     private fun create(id: String, token: String): Entry {
-        val engine = engineFactory(id, token, configs.get(id), dataDir)
+        val setup = setups.get(id)
+        val catalog = catalogs.catalog.value
+        val engine: BotEngine = JdaBotEngine(
+            token,
+            RulesCompiler.compileSetup(setup, catalog),
+            logFile = File(dataDir, "logs/$id.log"),
+            varsFile = File(dataDir, "vars/$id.json"),
+            modules = ModuleFactory.create(setup, catalog, id),
+            http = http,
+            renderer = renderer,
+            dataDir = dataDir,
+        )
         val jobs = listOf(
             scope.launch { engine.state.collect { s -> _states.update { it + (id to s) } } },
             scope.launch {

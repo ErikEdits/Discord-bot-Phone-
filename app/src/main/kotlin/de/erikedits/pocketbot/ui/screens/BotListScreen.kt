@@ -68,6 +68,7 @@ fun BotListScreen(
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     LaunchedEffect(Unit) {
         container.auth.refresh()
+        container.catalog.refresh()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !container.prefs.notificationsAsked) {
             container.prefs.notificationsAsked = true
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)

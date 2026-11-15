@@ -29,6 +29,11 @@ class Prefs(context: Context) {
         get() = sp.getInt("battery_resume", 30)
         set(value) = sp.edit { putInt("battery_resume", value.coerceIn(10, 90)) }
 
+    /** User agreed that free-text descriptions are sent to an AI provider (SPEC-v2 4). */
+    var aiConsent: Boolean
+        get() = sp.getBoolean("ai_consent", false)
+        set(value) = sp.edit { putBoolean("ai_consent", value) }
+
     var userJson: String?
         get() = sp.getString("user_json", null)
         set(value) = sp.edit { if (value == null) remove("user_json") else putString("user_json", value) }

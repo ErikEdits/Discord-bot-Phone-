@@ -52,7 +52,11 @@ import de.erikedits.pocketbot.engine.isActive
 import de.erikedits.pocketbot.service.BotRuntimeService
 import de.erikedits.pocketbot.shared.discord.InviteLink
 import de.erikedits.pocketbot.shared.util.HosterAdvice
+import de.erikedits.pocketbot.ui.setup.ImageCollectionCard
+import de.erikedits.pocketbot.ui.setup.LegacyRulesCard
+import de.erikedits.pocketbot.ui.setup.ModulePanels
 import de.erikedits.pocketbot.ui.theme.PbColors
+import androidx.compose.ui.platform.LocalConfiguration
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.text.DateFormat
@@ -61,15 +65,17 @@ import java.util.Date
 /** Per-bot dashboard (SPEC 4.5): status, uptime, ping, logs, data usage. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit, onOpenRules: () -> Unit) {
+fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit, onOpenSetup: () -> Unit) {
     val context = LocalContext.current
     val bots by container.bots.bots.collectAsStateWithLifecycle()
     val bot = bots.firstOrNull { it.id == botId }
     val states by container.botManager.states.collectAsStateWithLifecycle()
     val problems by container.botManager.problems.collectAsStateWithLifecycle()
-    val configs by container.configs.configs.collectAsStateWithLifecycle()
-    val initialConfig = remember(botId) { container.configs.get(botId) }
-    val functionCount = (configs[botId] ?: initialConfig).rules.count { it.enabled }
+    val setups by container.setups.setups.collectAsStateWithLifecycle()
+    val initialSetup = remember(botId) { container.setups.get(botId) }
+    val setup = setups[botId] ?: initialSetup
+    val catalog by container.catalog.catalog.collectAsStateWithLifecycle()
+    val lang = LocalConfiguration.current.locales[0].language
     val state = states[botId] ?: EngineState()
     val engine = container.botManager.engine(botId)
     val emptyLogs = remember { MutableStateFlow(container.botManager.savedLog(botId)) }
@@ -151,11 +157,19 @@ fun DashboardScreen(container: AppContainer, botId: String, onBack: () -> Unit, 
                 }
             }
             item {
-                SectionCard(title = stringResource(R.string.dashboard_functions)) {
-                    Text(stringResource(R.string.dashboard_functions_text, functionCount), style = MaterialTheme.typography.bodyMedium)
-                    Button(onClick = onOpenRules, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.dashboard_functions_edit)) }
+                SectionCard(title = stringResource(R.string.dashboard_types)) {
+                    if (setup.types.isEmpty()) Text(stringResource(R.string.dashboard_types_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    setup.types.forEach { sel ->
+                        val type = catalog.type(sel.typeId)
+                        Text("${type?.emoji ?: "🤖"} ${type?.name?.pick(lang) ?: sel.typeId}")
+                    }
+                    Button(onClick = onOpenSetup, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.dashboard_types_edit)) }
                 }
             }
+            item { Text(stringResource(R.string.dashboard_controls), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
+            item { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { ModulePanels(container, botId) } }
+            if (setup.types.any { it.typeId == "images" }) item { ImageCollectionCard(container, botId) }
+            if (setup.legacyRules.isNotEmpty()) item { LegacyRulesCard(container, botId, setup) }
             item {
                 SectionCard(title = stringResource(R.string.dashboard_stats)) {
                     StatRow(stringResource(R.string.dashboard_uptime), state.onlineSince?.let { formatDuration(now - it) } ?: "–")

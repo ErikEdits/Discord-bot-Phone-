@@ -5,7 +5,6 @@ import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,10 +15,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -34,7 +31,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,9 +53,10 @@ import de.erikedits.pocketbot.data.StoredBot
 import de.erikedits.pocketbot.service.BotRuntimeService
 import de.erikedits.pocketbot.shared.api.DefaultHosters
 import de.erikedits.pocketbot.shared.api.Hoster
-import de.erikedits.pocketbot.shared.config.BotConfig
-import de.erikedits.pocketbot.shared.config.Templates
-import de.erikedits.pocketbot.shared.config.requiredIntents
+import de.erikedits.pocketbot.shared.catalog.BotSetup
+import de.erikedits.pocketbot.shared.catalog.Requirements
+import de.erikedits.pocketbot.ui.setup.DescribeStep
+import de.erikedits.pocketbot.ui.setup.QuestionsStep
 import de.erikedits.pocketbot.shared.discord.BotIdentity
 import de.erikedits.pocketbot.shared.discord.PrivilegedIntent
 import de.erikedits.pocketbot.shared.discord.missing
@@ -70,15 +67,8 @@ import de.erikedits.pocketbot.shared.util.HosterAdvice
 import de.erikedits.pocketbot.ui.theme.PbColors
 import kotlinx.coroutines.launch
 
-private enum class Step { TUTORIAL, TOKEN, STORAGE, PURPOSE, INVITE }
+private enum class Step { TUTORIAL, TOKEN, STORAGE, PURPOSE, DESCRIBE, QUESTIONS, INVITE }
 
-private val CATEGORIES = listOf(
-    "moderation" to R.string.purpose_cat_moderation,
-    "community" to R.string.purpose_cat_community,
-    "support" to R.string.purpose_cat_support,
-    "gaming" to R.string.purpose_cat_gaming,
-    "other" to R.string.purpose_cat_other,
-)
 
 /** Bot creation wizard (SPEC 2.3). */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,9 +81,8 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
     var multiServer by rememberSaveable { mutableStateOf(false) }
     var useCloud by rememberSaveable { mutableStateOf(false) }
     var newPin by remember { mutableStateOf<String?>(null) }
-    val categories = remember { mutableStateListOf<String>() }
-    var useTemplate by rememberSaveable { mutableStateOf(true) }
-    val language = LocalConfiguration.current.locales[0].language
+    var setupJson by rememberSaveable { mutableStateOf(BotSetup().toJson()) }
+    val setup = remember(setupJson) { BotSetup.fromJson(setupJson) }
 
     fun back() {
         if (step == Step.TUTORIAL) onBack() else step = Step.entries[step.ordinal - 1]
@@ -145,11 +134,20 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
                         identity = identity,
                         multiServer = multiServer,
                         onMultiServer = { multiServer = it },
-                        categories = categories,
-                        useTemplate = useTemplate,
-                        onUseTemplate = { useTemplate = it },
-                        language = language,
-                        onNext = { step = Step.INVITE },
+                        onNext = { step = Step.DESCRIBE },
+                    )
+                    Step.DESCRIBE -> DescribeStep(
+                        container, setup,
+                        onSetup = { setupJson = it.toJson() },
+                        onNext = { step = Step.QUESTIONS },
+                        nextLabel = stringResource(R.string.next),
+                    )
+                    Step.QUESTIONS -> QuestionsStep(
+                        container, setup, pickers = null,
+                        onSetup = { setupJson = it.toJson() },
+                        onBackFromFirst = { step = Step.DESCRIBE },
+                        onDone = { step = Step.INVITE },
+                        doneLabel = stringResource(R.string.next),
                     )
                     Step.INVITE -> {
                         val bot = identity
@@ -157,7 +155,7 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
                             // Identity is not kept across process death -> check the token again.
                             LaunchedEffect(Unit) { step = Step.TOKEN }
                         } else {
-                            InviteStep(bot) {
+                            InviteStep(container, bot, setup) {
                                 val cleaned = BotToken.clean(token)
                                 container.bots.upsert(
                                     StoredBot(
@@ -165,16 +163,14 @@ fun CreateBotScreen(container: AppContainer, onBack: () -> Unit, onDone: (String
                                         name = bot.username,
                                         avatarUrl = bot.avatarUrl,
                                         multiServer = multiServer,
-                                        categories = categories.toList(),
+                                        categories = setup.types.map { it.typeId },
                                     ),
                                     token = cleaned,
                                 )
                                 container.botManager.remove(bot.applicationId) // token may have changed
-                                if (useTemplate && categories.isNotEmpty()) {
-                                    var config = container.configs.get(bot.applicationId)
-                                    categories.forEach { config = Templates.merge(config, Templates.forCategory(it, language)) }
-                                    container.configs.save(bot.applicationId, config)
-                                }
+                                // Keep old-builder rules of a re-created bot, take the new types + answers.
+                                val previous = container.setups.get(bot.applicationId)
+                                container.setups.save(bot.applicationId, setup.copy(legacyRules = previous.legacyRules))
                                 BotRuntimeService.startBot(context, bot.applicationId)
                                 if (useCloud) {
                                     newPin?.let { container.vault.setPin(it) }
@@ -359,10 +355,6 @@ private fun PurposeStep(
     identity: BotIdentity?,
     multiServer: Boolean,
     onMultiServer: (Boolean) -> Unit,
-    categories: MutableList<String>,
-    useTemplate: Boolean,
-    onUseTemplate: (Boolean) -> Unit,
-    language: String,
     onNext: () -> Unit,
 ) {
     Text(stringResource(R.string.purpose_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -380,43 +372,6 @@ private fun PurposeStep(
     val recommend = HosterAdvice.shouldRecommend(multiServer, identity?.guildCount ?: 0, 0)
     if (recommend) HosterRecommendation()
 
-    Text(stringResource(R.string.purpose_what), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-    Text(stringResource(R.string.purpose_optional), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        CATEGORIES.forEach { (key, label) ->
-            FilterChip(
-                selected = key in categories,
-                onClick = { if (key in categories) categories.remove(key) else categories.add(key) },
-                label = { Text(stringResource(label)) },
-            )
-        }
-    }
-    if (categories.isNotEmpty()) {
-        val templateConfig = remember(categories.toList(), language) {
-            var c = BotConfig()
-            categories.forEach { c = Templates.merge(c, Templates.forCategory(it, language)) }
-            c
-        }
-        SectionCard {
-            Row(
-                Modifier.fillMaxWidth().selectable(selected = useTemplate, onClick = { onUseTemplate(!useTemplate) }, role = Role.Checkbox),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(checked = useTemplate, onCheckedChange = null)
-                Column(Modifier.padding(start = 8.dp)) {
-                    Text(stringResource(R.string.purpose_use_template, templateConfig.rules.size), fontWeight = FontWeight.SemiBold)
-                    Text(templateConfig.rules.joinToString(", ") { it.name }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            val missing = identity?.intents?.missing(templateConfig.requiredIntents()).orEmpty()
-            if (useTemplate && missing.isNotEmpty()) {
-                Text(stringResource(R.string.purpose_template_intents), style = MaterialTheme.typography.bodySmall, color = PbColors.Yellow)
-                if (PrivilegedIntent.MESSAGE_CONTENT in missing) Text("• " + stringResource(R.string.intent_message_content), style = MaterialTheme.typography.bodySmall, color = PbColors.Yellow)
-                if (PrivilegedIntent.SERVER_MEMBERS in missing) Text("• " + stringResource(R.string.intent_server_members), style = MaterialTheme.typography.bodySmall, color = PbColors.Yellow)
-            }
-        }
-    }
-    Text(stringResource(R.string.purpose_templates_later), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Button(onClick = onNext, modifier = Modifier.fillMaxWidth()) {
         Text(stringResource(if (recommend) R.string.purpose_phone_anyway else R.string.next))
     }
@@ -446,10 +401,25 @@ private fun HosterRecommendation() {
 }
 
 @Composable
-private fun InviteStep(bot: BotIdentity, onFinish: () -> Unit) {
+private fun InviteStep(container: AppContainer, bot: BotIdentity, setup: BotSetup, onFinish: () -> Unit) {
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
-    val link = InviteLink.build(bot.applicationId)
+    val catalog = container.catalog.catalog.value
+    val lang = LocalConfiguration.current.locales[0].language
+    val req = remember(setup) { Requirements.of(setup, catalog) }
+    val link = InviteLink.build(bot.applicationId, req.permissions)
+    val missing = bot.intents.missing(req.intents)
+    SectionCard(title = stringResource(R.string.invite_summary)) {
+        setup.types.mapNotNull { catalog.type(it.typeId) }.forEach { Text("${it.emoji} ${it.name.pick(lang)}") }
+    }
+    if (missing.isNotEmpty()) {
+        SectionCard(title = stringResource(R.string.rules_intents_title)) {
+            if (PrivilegedIntent.MESSAGE_CONTENT in missing) Text("• " + stringResource(R.string.intent_message_content))
+            if (PrivilegedIntent.SERVER_MEMBERS in missing) Text("• " + stringResource(R.string.intent_server_members))
+            if (PrivilegedIntent.PRESENCE in missing) Text("• " + stringResource(R.string.intent_presence))
+            Text(stringResource(R.string.intents_how), style = MaterialTheme.typography.bodySmall, color = PbColors.Yellow)
+        }
+    }
     Text(stringResource(R.string.invite_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
     Text(stringResource(R.string.invite_text), color = MaterialTheme.colorScheme.onSurfaceVariant)
     SectionCard {

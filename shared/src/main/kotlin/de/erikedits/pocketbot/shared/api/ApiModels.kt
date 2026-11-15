@@ -129,3 +129,28 @@ object DefaultHosters {
         ),
     )
 }
+
+// ---------------------------------------------------------------- AI (docs/BACKEND-AI.md)
+
+@Serializable
+data class AiRequest(
+    val mode: String,
+    val text: String,
+    val lang: String,
+    @SerialName("type_ids") val typeIds: List<String> = emptyList(),
+    @SerialName("question_id") val questionId: String? = null,
+)
+
+@Serializable
+data class AiJobStarted(@SerialName("job_id") val jobId: String, @SerialName("remaining_today") val remainingToday: Int? = null)
+
+@Serializable
+data class AiResult(
+    val types: List<String> = emptyList(),
+    val answers: Map<String, Map<String, kotlinx.serialization.json.JsonElement>> = emptyMap(),
+    val summary: String? = null,
+    val model: String? = null,
+)
+
+@Serializable
+data class AiJob(val status: String, val result: AiResult? = null, val error: String? = null)
